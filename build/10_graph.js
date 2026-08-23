@@ -400,7 +400,7 @@ function bracketSvg(P,o,items,tops,ymaxPix){
 }
 function prepBrackets(g,sh,o,names){
   const list=(o.autoBracket?autoBrackets(g,sh,names):[]).concat(o.brackets||[]);
-  o._headroom=list.length?Math.round(list.length*Math.max(16,o.fs*1.5)+o.fs*1.5):0;
+  o._headroom=list.length?Math.round(list.length*Math.max(16,o.fs*1.5)+o.fs*1.6+(o.title?o.fsTitle*1.1:0)):0;
   return list;
 }
 function autoBrackets(g,sh,names){
@@ -765,6 +765,86 @@ GRAPHTYPES.xy_area={name:"面グラフ",cat:"XY",for:["xy"],
       if(o.showPoints)ms.forEach(p=>body+=sym(s.symbol,P.X(p.x),P.Y(p.mean),o.pointSize/2.4,symFill(o,s.color),symStroke(o,s.color),1.2));
     });
     return wrapSVG(o,P,body);
+  }};
+/* ---------- バブルプロット ---------- */
+GRAPHTYPES.xy_bubble={name:"バブルプロット",cat:"XY",for:["multivar","xy"],
+  desc:"X・Yに加え、点の大きさと色で2つの変数を同時に表します（4変数の可視化）。",
+  draw:(g,sh)=>{
+    const o=gopt(g),ink=inkOf(o),bold=o.bold!==false;
+    // 列の割り当て：多変数表は 1列目X・2列目Y・3列目サイズ・4列目色
+    const cols=sh.groups.map((_,i)=>i);
+    const pts=[];
+    if(sh.ttype==="multivar"){
+      if(cols.length<3)return emptySVG("X・Y・大きさの3列以上が必要です");
+      for(let r=0;r<sh.rows.length;r++){
+        const x=cellNum(sh,r,0,0),y=cellNum(sh,r,1,0),sz=cellNum(sh,r,2,0);
+        const cv=cols.length>3?cellNum(sh,r,3,0):NaN;
+        if(!isNaN(x)&&!isNaN(y)&&!isNaN(sz))pts.push({x,y,sz,c:cv,label:sh.rows[r].t||""});
+      }
+    }else{
+      if(cols.length<2)return emptySVG("Yと大きさの2データセットが必要です");
+      for(let r=0;r<sh.rows.length;r++){
+        const x=parseNum(sh.rows[r].x),y=cellNum(sh,r,0,0),sz=cellNum(sh,r,1,0);
+        const cv=cols.length>2?cellNum(sh,r,2,0):NaN;
+        if(!isNaN(x)&&!isNaN(y)&&!isNaN(sz))pts.push({x,y,sz,c:cv,label:sh.rows[r].t||""});
+      }
+    }
+    if(pts.length<1)return emptySVG("数値のそろった行がありません");
+    const names=sh.ttype==="multivar"
+      ? [sh.groups[0].name,sh.groups[1].name,sh.groups[2].name,sh.groups[3]?sh.groups[3].name:""]
+      : [sh.xTitle||"X",sh.groups[0].name,sh.groups[1].name,sh.groups[2]?sh.groups[2].name:""];
+    const hasColor=pts.some(p=>isFinite(p.c));
+    const padv=(arr)=>{const lo=Math.min(...arr),hi=Math.max(...arr),d=(hi-lo)*0.09||1;return arr.concat([lo-d,hi+d]);};
+    const xs=autoRange(padv(pts.map(p=>p.x)),o,"x"),ys=autoRange(padv(pts.map(p=>p.y)),o,"y");
+    ys.title=o.ylab||names[1];
+    const P=startPlot(o,{type:"num",min:xs.min,max:xs.max,log:xs.log,ticks:xs.ticks,title:o.xlab||names[0]},ys);
+    const szMin=Math.min(...pts.map(p=>p.sz)),szMax=Math.max(...pts.map(p=>p.sz));
+    const rMin=o.pointSize*0.45,rMax=o.pointSize*2.2;
+    const rOf=(v)=>rMin+(rMax-rMin)*Math.sqrt(Math.max(0,(v-szMin)/((szMax-szMin)||1)));
+    const cMin=hasColor?Math.min(...pts.filter(p=>isFinite(p.c)).map(p=>p.c)):0;
+    const cMax=hasColor?Math.max(...pts.filter(p=>isFinite(p.c)).map(p=>p.c)):1;
+    const ramp=heatRamp(o);
+    let body="";
+    pts.slice().sort((a,b)=>b.sz-a.sz).forEach(p=>{
+      const fill=hasColor&&isFinite(p.c)?rampColor(ramp,(p.c-cMin)/((cMax-cMin)||1)):palOf(o,0);
+      body+='<circle cx="'+P.X(p.x)+'" cy="'+P.Y(p.y)+'" r="'+rOf(p.sz).toFixed(2)+'" fill="'+fill
+        +'" fill-opacity="'+(o.barOpacity*0.85)+'" stroke="'+(o.pointStroke?ink:fill)+'" stroke-width="1.1"/>';
+    });
+    // 右側の凡例（カラースケールとサイズ）
+    let over="";
+    const fs=P.fs,lx=P.px1+16;
+    let ly=P.py0+fs;
+    if(hasColor){
+      over+=tspanText(lx,ly,esc(names[3]||"色"),{fs,bold,fill:ink});
+      const bw=Math.max(12,fs*0.9),bh=Math.min(110,o.h*0.45);
+      const by=ly+8;
+      for(let i=0;i<50;i++)
+        over+='<rect x="'+lx+'" y="'+(by+bh*i/50)+'" width="'+bw+'" height="'+(bh/50+0.7)+'" fill="'+rampColor(ramp,1-i/50)+'"/>';
+      over+='<rect x="'+lx+'" y="'+by+'" width="'+bw+'" height="'+bh+'" fill="none" stroke="'+ink+'" stroke-width="1.4"/>';
+      linTicks(cMin,cMax,4).forEach(v=>{
+        const y=by+bh*(1-(v-cMin)/((cMax-cMin)||1));
+        over+='<line x1="'+(lx+bw)+'" y1="'+y+'" x2="'+(lx+bw+4)+'" y2="'+y+'" stroke="'+ink+'" stroke-width="1.4"/>'
+          +tspanText(lx+bw+7,y+fs*0.34,fmtTick(v),{fs:fs*0.9,bold,fill:ink});
+      });
+      ly=by+bh+fs*1.8;
+    }
+    over+=tspanText(lx,ly,esc(names[2]||"大きさ"),{fs,bold,fill:ink});
+    ly+=6;
+    [szMax,(szMax+szMin)/2,szMin].forEach(v=>{
+      const r=rOf(v);
+      ly+=r+6;
+      over+='<circle cx="'+(lx+rMax)+'" cy="'+ly+'" r="'+r.toFixed(2)+'" fill="none" stroke="'+ink+'" stroke-width="1.2"/>';
+      over+=tspanText(lx+rMax*2+8,ly+fs*0.34,fmtNumShort(v),{fs:fs*0.9,bold,fill:ink});
+      ly+=r+4;
+    });
+    // 凡例の幅ぶんキャンバスを広げる
+    const need=Math.round(rMax*2+70);
+    let svg=wrapSVG(o,P,body,over);
+    svg=svg.replace(/width="([\d.]+)" height="([\d.]+)" viewBox="0 0 ([\d.]+) ([\d.]+)"/,
+      (m,w,h,vw,vh)=>'width="'+(+w+need)+'" height="'+h+'" viewBox="0 0 '+(+vw+need)+' '+vh+'"');
+    svg=svg.replace(/<rect width="([\d.]+)" height="([\d.]+)" fill="#fff"\/>/,
+      (m,w,h)=>'<rect width="'+(+w+need)+'" height="'+h+'" fill="#fff"/>');
+    return svg;
   }};
 /* ---------- グループ（2要因）系 ---------- */
 function grpData(sh,o){

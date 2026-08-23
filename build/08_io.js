@@ -523,7 +523,7 @@ const DEMOS={
   make:(sh)=>{
     const rnd=mulberry32(4021);
     sh.name="腫瘍重量（3群）";sh.yTitle="腫瘍重量 (mg)";
-    sh.groups=[{name:"対照",color:"#7b8794",symbol:"circle"},{name:"薬剤A 10mg/kg",color:"#1f6fd0",symbol:"square"},{name:"薬剤B 10mg/kg",color:"#e0603c",symbol:"triangle"}];
+    sh.groups=[{name:"対照",color:GCOLORS[0],symbol:"circle"},{name:"薬剤A 10mg/kg",color:GCOLORS[1],symbol:"circle"},{name:"薬剤B 10mg/kg",color:GCOLORS[2],symbol:"circle"}];
     sh.sub=1;sh.rows=[];
     const mu=[820,610,395],sg=[145,130,110];
     for(let r=0;r<10;r++){
@@ -536,7 +536,7 @@ const DEMOS={
   make:(sh)=>{
     const rnd=mulberry32(777);
     sh.name="用量反応（IC50）";sh.xTitle="log[濃度] (M)";sh.yTitle="細胞生存率 (%)";
-    sh.groups=[{name:"薬剤X",color:"#1f6fd0",symbol:"circle"},{name:"薬剤Y",color:"#e0603c",symbol:"square"}];
+    sh.groups=[{name:"薬剤X",color:GCOLORS[0],symbol:"circle"},{name:"薬剤Y",color:GCOLORS[1],symbol:"circle"}];
     sh.sub=3;sh.subMode="rep";sh.rows=[];
     const xs=[-9,-8.5,-8,-7.5,-7,-6.5,-6,-5.5,-5];
     const ic=[-7.1,-6.2],hill=[1.1,1.4];
@@ -553,7 +553,7 @@ const DEMOS={
   make:(sh)=>{
     const rnd=mulberry32(19);
     sh.name="腫瘍体積の経時変化";sh.yTitle="腫瘍体積 (mm³)";
-    sh.groups=[{name:"対照",color:"#7b8794",symbol:"circle"},{name:"治療",color:"#1f6fd0",symbol:"square"}];
+    sh.groups=[{name:"対照",color:GCOLORS[0],symbol:"circle"},{name:"治療",color:GCOLORS[1],symbol:"circle"}];
     sh.sub=4;sh.rows=[];
     const days=["Day 0","Day 7","Day 14","Day 21"];
     days.forEach((d,i)=>{
@@ -569,7 +569,7 @@ const DEMOS={
   make:(sh)=>{
     const rnd=mulberry32(3355);
     sh.name="全生存期間";sh.xTitle="生存期間 (月)";
-    sh.groups=[{name:"標準治療",color:"#7b8794",symbol:"circle"},{name:"新規治療",color:"#1f6fd0",symbol:"square"}];
+    sh.groups=[{name:"標準治療",color:GCOLORS[0],symbol:"circle"},{name:"新規治療",color:GCOLORS[1],symbol:"circle"}];
     sh.sub=1;sh.rows=[];
     const gen=(med,n,gi)=>{
       for(let i=0;i<n;i++){
@@ -586,7 +586,7 @@ const DEMOS={
  cont:{name:"分割表（奏効率）",tt:"contingency",desc:"レジメン別の奏効あり/なし。χ²・Fisher・オッズ比。",
   make:(sh)=>{
     sh.name="奏効率の比較";
-    sh.groups=[{name:"奏効あり",color:"#2fa36b",symbol:"circle"},{name:"奏効なし",color:"#b6bfcc",symbol:"square"}];
+    sh.groups=[{name:"奏効あり",color:GCOLORS[6],symbol:"circle"},{name:"奏効なし",color:"#B6BFCC",symbol:"circle"}];
     sh.sub=1;sh.rows=[];
     const data=[["レジメンA",38,22],["レジメンB",21,39]];
     data.forEach(d=>{
@@ -597,7 +597,7 @@ const DEMOS={
  parts:{name:"有害事象の内訳（円グラフ）",tt:"parts",desc:"Grade別の症例数。円・ドーナツ・積み上げ。",
   make:(sh)=>{
     sh.name="有害事象 Grade 分布";
-    sh.groups=[{name:"症例数",color:"#1f6fd0",symbol:"circle"}];
+    sh.groups=[{name:"症例数",color:GCOLORS[0],symbol:"circle"}];
     sh.sub=1;sh.rows=[];
     [["Grade 1",42],["Grade 2",28],["Grade 3",14],["Grade 4",5],["Grade 5",1]].forEach(d=>{
       const row=newRow(1,1);row.t=d[0];row.v[0][0]=String(d[1]);sh.rows.push(row);
@@ -607,7 +607,7 @@ const DEMOS={
   make:(sh)=>{
     const rnd=mulberry32(88);
     sh.name="治療前後のLDH";sh.yTitle="LDH (U/L)";
-    sh.groups=[{name:"治療前",color:"#7b8794",symbol:"circle"},{name:"治療後",color:"#1f6fd0",symbol:"square"}];
+    sh.groups=[{name:"治療前",color:GCOLORS[0],symbol:"circle"},{name:"治療後",color:GCOLORS[1],symbol:"circle"}];
     sh.sub=1;sh.rows=[];
     for(let i=0;i<12;i++){
       const base=rnorm(rnd,412,95);
@@ -621,7 +621,7 @@ const DEMOS={
   make:(sh)=>{
     const rnd=mulberry32(1212);
     sh.name="酵素反応速度";sh.xTitle="[基質] (µM)";sh.yTitle="速度 (nmol/min)";
-    sh.groups=[{name:"野生型",color:"#1f6fd0",symbol:"circle"},{name:"変異型",color:"#e0603c",symbol:"square"}];
+    sh.groups=[{name:"野生型",color:GCOLORS[0],symbol:"circle"},{name:"変異型",color:GCOLORS[1],symbol:"circle"}];
     sh.sub=2;sh.rows=[];
     [0.5,1,2,5,10,20,50,100,200].forEach(x=>{
       const row=newRow(2,2);row.x=String(x);
@@ -656,7 +656,7 @@ const DEMOS={
   make:(sh)=>{
     const rnd=mulberry32(2468);
     sh.name="mRNA発現（入れ子）";sh.yTitle="相対発現量";
-    sh.groups=[{name:"対照",color:"#7b8794",symbol:"circle"},{name:"処理A",color:"#1f6fd0",symbol:"square"},{name:"処理B",color:"#e0603c",symbol:"triangle"}];
+    sh.groups=[{name:"対照",color:GCOLORS[0],symbol:"circle"},{name:"処理A",color:GCOLORS[1],symbol:"circle"},{name:"処理B",color:GCOLORS[2],symbol:"circle"}];
     sh.sub=4;sh.rows=[];
     const gm=[1.0,1.62,2.35];
     const subj=[];
