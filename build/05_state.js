@@ -2,7 +2,7 @@
 /* =====================================================================
    プロジェクト状態とデータモデル
    ===================================================================== */
-const GCOLORS=["#1f6fd0","#e0603c","#2fa36b","#8258c8","#e8a51b","#3aa0d8","#d84a3f","#26a69a","#ec407a","#7e57c2","#8d6e63","#546e7a"];
+const GCOLORS=["#F0A22E","#DE5C33","#7C1D1D","#8B44AC","#3F6FD1","#7FBEEA","#2E9B57","#C94F8A","#4C4C4C","#B8A22E","#1f6fd0","#26a69a"];
 const SYMBOLS=["circle","square","triangle","triangle-down","diamond","plus","cross","star","hexagon","bar"];
 const TTYPES={
   xy:{name:"XY",icon:"📈",desc:"X（濃度・時間など）に対しY値。回帰・相関・用量反応曲線に。"},
@@ -30,7 +30,7 @@ function makeDataSheet(ttype,name){
   const sh={id:uid(),kind:"data",ttype:t,name:name||(TTYPES[t].name+"データ"),
     sub:ns,subMode:"rep",xTitle:t==="survival"?"時間":"X",yTitle:"Y",
     xFormat:"numbers",groups:[],rows:[]};
-  for(let g=0;g<ng;g++)sh.groups.push({name:defaultGroupName(t,g),color:GCOLORS[g%GCOLORS.length],symbol:SYMBOLS[g%SYMBOLS.length]});
+  for(let g=0;g<ng;g++)sh.groups.push({name:defaultGroupName(t,g),color:GCOLORS[g%GCOLORS.length],symbol:"circle"});
   for(let r=0;r<nr;r++)sh.rows.push(newRow(ng,ns));
   if(t==="grouped"||t==="contingency"||t==="parts"||t==="nested")sh.rows.forEach((r,i)=>r.t=defaultRowName(t,i));
   return sh;

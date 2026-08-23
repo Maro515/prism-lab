@@ -22,28 +22,28 @@ function redrawGraph(){
 function graphTypesFor(tt){return Object.keys(GRAPHTYPES).filter(k=>GRAPHTYPES[k].for.includes(tt));}
 function typeThumb(k){
   const c={col_scatter:'<circle cx="14" cy="30" r="2.5"/><circle cx="17" cy="24" r="2.5"/><circle cx="12" cy="20" r="2.5"/><circle cx="38" cy="18" r="2.5"/><circle cx="42" cy="12" r="2.5"/><circle cx="35" cy="24" r="2.5"/><path d="M8 24h12M32 18h12" stroke="#1d2430" stroke-width="2" fill="none"/>',
-    col_bar:'<rect x="8" y="22" width="14" height="20" fill="#1f6fd0"/><rect x="30" y="12" width="14" height="30" fill="#e0603c"/><path d="M15 22v-7M15 15h0M38 12V6" stroke="#1d2430" stroke-width="1.5"/>',
-    col_box:'<rect x="8" y="18" width="14" height="14" fill="none" stroke="#1f6fd0" stroke-width="2"/><path d="M15 18v-8M15 32v8M8 25h14" stroke="#1f6fd0" stroke-width="2"/><rect x="30" y="14" width="14" height="12" fill="none" stroke="#e0603c" stroke-width="2"/><path d="M37 14V6M37 26v10M30 20h14" stroke="#e0603c" stroke-width="2"/>',
-    col_violin:'<path d="M15 8c8 6 8 12 0 18-8-6-8-12 0-18z" fill="#1f6fd0" opacity=".5"/><path d="M15 26c6 4 6 10 0 14-6-4-6-10 0-14z" fill="#1f6fd0" opacity=".5"/><path d="M37 10c9 8 9 18 0 28-9-10-9-20 0-28z" fill="#e0603c" opacity=".5"/>',
-    col_beforeafter:'<path d="M12 36L40 16M12 30L40 22M12 22L40 12" stroke="#9aa3b1" stroke-width="1.5" fill="none"/><circle cx="12" cy="36" r="3" fill="#1f6fd0"/><circle cx="12" cy="30" r="3" fill="#1f6fd0"/><circle cx="12" cy="22" r="3" fill="#1f6fd0"/><circle cx="40" cy="16" r="3" fill="#e0603c"/><circle cx="40" cy="22" r="3" fill="#e0603c"/><circle cx="40" cy="12" r="3" fill="#e0603c"/>',
-    col_float:'<rect x="8" y="14" width="14" height="24" fill="#1f6fd0" opacity=".35" stroke="#1f6fd0"/><rect x="30" y="8" width="14" height="20" fill="#e0603c" opacity=".35" stroke="#e0603c"/>',
-    col_hist:'<rect x="6" y="30" width="8" height="12" fill="#1f6fd0"/><rect x="15" y="20" width="8" height="22" fill="#1f6fd0"/><rect x="24" y="12" width="8" height="30" fill="#1f6fd0"/><rect x="33" y="22" width="8" height="20" fill="#1f6fd0"/><rect x="42" y="34" width="8" height="8" fill="#1f6fd0"/>',
-    xy_scatter:'<circle cx="10" cy="36" r="2.6" fill="#1f6fd0"/><circle cx="18" cy="30" r="2.6" fill="#1f6fd0"/><circle cx="26" cy="24" r="2.6" fill="#1f6fd0"/><circle cx="34" cy="16" r="2.6" fill="#1f6fd0"/><circle cx="44" cy="10" r="2.6" fill="#1f6fd0"/><path d="M8 38L46 8" stroke="#e0603c" stroke-width="1.8" fill="none"/>',
-    xy_line:'<path d="M8 38C18 36 22 14 46 10" stroke="#1f6fd0" stroke-width="2" fill="none"/><circle cx="8" cy="38" r="2.6" fill="#1f6fd0"/><circle cx="24" cy="24" r="2.6" fill="#1f6fd0"/><circle cx="46" cy="10" r="2.6" fill="#1f6fd0"/>',
-    xy_area:'<path d="M8 40L8 30C20 26 26 14 46 12L46 40Z" fill="#1f6fd0" opacity=".4" stroke="#1f6fd0" stroke-width="1.6"/>',
-    grp_bar:'<rect x="8" y="20" width="7" height="22" fill="#1f6fd0"/><rect x="16" y="26" width="7" height="16" fill="#e0603c"/><rect x="30" y="12" width="7" height="30" fill="#1f6fd0"/><rect x="38" y="22" width="7" height="20" fill="#e0603c"/>',
-    grp_stack:'<rect x="10" y="24" width="14" height="18" fill="#1f6fd0"/><rect x="10" y="12" width="14" height="12" fill="#e0603c"/><rect x="32" y="28" width="14" height="14" fill="#1f6fd0"/><rect x="32" y="10" width="14" height="18" fill="#e0603c"/>',
-    grp_scatter:'<circle cx="12" cy="28" r="2.4" fill="#1f6fd0"/><circle cx="12" cy="34" r="2.4" fill="#1f6fd0"/><circle cx="20" cy="20" r="2.4" fill="#e0603c"/><circle cx="20" cy="26" r="2.4" fill="#e0603c"/><circle cx="34" cy="24" r="2.4" fill="#1f6fd0"/><circle cx="42" cy="14" r="2.4" fill="#e0603c"/>',
-    grp_box:'<rect x="9" y="20" width="9" height="14" fill="none" stroke="#1f6fd0" stroke-width="2"/><rect x="21" y="16" width="9" height="14" fill="none" stroke="#e0603c" stroke-width="2"/><rect x="35" y="22" width="9" height="12" fill="none" stroke="#2fa36b" stroke-width="2"/>',
-    grp_line:'<path d="M8 34L22 26L36 18L48 12" stroke="#1f6fd0" stroke-width="2" fill="none"/><path d="M8 38L22 34L36 32L48 30" stroke="#e0603c" stroke-width="2" fill="none"/>',
+    col_bar:'<rect x="8" y="22" width="14" height="20" fill="#F0A22E"/><rect x="30" y="12" width="14" height="30" fill="#DE5C33"/><path d="M15 22v-7M15 15h0M38 12V6" stroke="#1d2430" stroke-width="1.5"/>',
+    col_box:'<rect x="8" y="18" width="14" height="14" fill="none" stroke="#F0A22E" stroke-width="2"/><path d="M15 18v-8M15 32v8M8 25h14" stroke="#F0A22E" stroke-width="2"/><rect x="30" y="14" width="14" height="12" fill="none" stroke="#DE5C33" stroke-width="2"/><path d="M37 14V6M37 26v10M30 20h14" stroke="#DE5C33" stroke-width="2"/>',
+    col_violin:'<path d="M15 8c8 6 8 12 0 18-8-6-8-12 0-18z" fill="#F0A22E" opacity=".5"/><path d="M15 26c6 4 6 10 0 14-6-4-6-10 0-14z" fill="#F0A22E" opacity=".5"/><path d="M37 10c9 8 9 18 0 28-9-10-9-20 0-28z" fill="#DE5C33" opacity=".5"/>',
+    col_beforeafter:'<path d="M12 36L40 16M12 30L40 22M12 22L40 12" stroke="#9aa3b1" stroke-width="1.5" fill="none"/><circle cx="12" cy="36" r="3" fill="#F0A22E"/><circle cx="12" cy="30" r="3" fill="#F0A22E"/><circle cx="12" cy="22" r="3" fill="#F0A22E"/><circle cx="40" cy="16" r="3" fill="#DE5C33"/><circle cx="40" cy="22" r="3" fill="#DE5C33"/><circle cx="40" cy="12" r="3" fill="#DE5C33"/>',
+    col_float:'<rect x="8" y="14" width="14" height="24" fill="#F0A22E" opacity=".35" stroke="#F0A22E"/><rect x="30" y="8" width="14" height="20" fill="#DE5C33" opacity=".35" stroke="#DE5C33"/>',
+    col_hist:'<rect x="6" y="30" width="8" height="12" fill="#F0A22E"/><rect x="15" y="20" width="8" height="22" fill="#F0A22E"/><rect x="24" y="12" width="8" height="30" fill="#F0A22E"/><rect x="33" y="22" width="8" height="20" fill="#F0A22E"/><rect x="42" y="34" width="8" height="8" fill="#F0A22E"/>',
+    xy_scatter:'<circle cx="10" cy="36" r="2.6" fill="#F0A22E"/><circle cx="18" cy="30" r="2.6" fill="#F0A22E"/><circle cx="26" cy="24" r="2.6" fill="#F0A22E"/><circle cx="34" cy="16" r="2.6" fill="#F0A22E"/><circle cx="44" cy="10" r="2.6" fill="#F0A22E"/><path d="M8 38L46 8" stroke="#DE5C33" stroke-width="1.8" fill="none"/>',
+    xy_line:'<path d="M8 38C18 36 22 14 46 10" stroke="#F0A22E" stroke-width="2" fill="none"/><circle cx="8" cy="38" r="2.6" fill="#F0A22E"/><circle cx="24" cy="24" r="2.6" fill="#F0A22E"/><circle cx="46" cy="10" r="2.6" fill="#F0A22E"/>',
+    xy_area:'<path d="M8 40L8 30C20 26 26 14 46 12L46 40Z" fill="#F0A22E" opacity=".4" stroke="#F0A22E" stroke-width="1.6"/>',
+    grp_bar:'<rect x="8" y="20" width="7" height="22" fill="#F0A22E"/><rect x="16" y="26" width="7" height="16" fill="#DE5C33"/><rect x="30" y="12" width="7" height="30" fill="#F0A22E"/><rect x="38" y="22" width="7" height="20" fill="#DE5C33"/>',
+    grp_stack:'<rect x="10" y="24" width="14" height="18" fill="#F0A22E"/><rect x="10" y="12" width="14" height="12" fill="#DE5C33"/><rect x="32" y="28" width="14" height="14" fill="#F0A22E"/><rect x="32" y="10" width="14" height="18" fill="#DE5C33"/>',
+    grp_scatter:'<circle cx="12" cy="28" r="2.4" fill="#F0A22E"/><circle cx="12" cy="34" r="2.4" fill="#F0A22E"/><circle cx="20" cy="20" r="2.4" fill="#DE5C33"/><circle cx="20" cy="26" r="2.4" fill="#DE5C33"/><circle cx="34" cy="24" r="2.4" fill="#F0A22E"/><circle cx="42" cy="14" r="2.4" fill="#DE5C33"/>',
+    grp_box:'<rect x="9" y="20" width="9" height="14" fill="none" stroke="#F0A22E" stroke-width="2"/><rect x="21" y="16" width="9" height="14" fill="none" stroke="#DE5C33" stroke-width="2"/><rect x="35" y="22" width="9" height="12" fill="none" stroke="#7C1D1D" stroke-width="2"/>',
+    grp_line:'<path d="M8 34L22 26L36 18L48 12" stroke="#F0A22E" stroke-width="2" fill="none"/><path d="M8 38L22 34L36 32L48 30" stroke="#DE5C33" stroke-width="2" fill="none"/>',
     grp_heat:'<rect x="8" y="10" width="12" height="10" fill="#c6dbef"/><rect x="20" y="10" width="12" height="10" fill="#4292c6"/><rect x="32" y="10" width="12" height="10" fill="#08306b"/><rect x="8" y="20" width="12" height="10" fill="#08306b"/><rect x="20" y="20" width="12" height="10" fill="#6baed6"/><rect x="32" y="20" width="12" height="10" fill="#c6dbef"/><rect x="8" y="30" width="12" height="10" fill="#4292c6"/><rect x="20" y="30" width="12" height="10" fill="#deebf7"/><rect x="32" y="30" width="12" height="10" fill="#2171b5"/>',
-    surv_km:'<path d="M8 10h8v6h8v10h8v10h14" stroke="#1f6fd0" stroke-width="2" fill="none"/><path d="M8 12h6v10h10v14h6v6h14" stroke="#e0603c" stroke-width="2" fill="none"/>',
-    pie:'<path d="M28 24L28 6A18 18 0 0 1 44 30Z" fill="#1f6fd0"/><path d="M28 24L44 30A18 18 0 0 1 12 34Z" fill="#e0603c"/><path d="M28 24L12 34A18 18 0 0 1 28 6Z" fill="#2fa36b"/>',
-    donut:'<path d="M28 24L28 6A18 18 0 0 1 44 30Z" fill="#1f6fd0"/><path d="M28 24L44 30A18 18 0 0 1 12 34Z" fill="#e0603c"/><path d="M28 24L12 34A18 18 0 0 1 28 6Z" fill="#2fa36b"/><circle cx="28" cy="24" r="8" fill="#fff"/>',
-    mv_corrheat:'<rect x="10" y="10" width="10" height="10" fill="#1f6fd0"/><rect x="20" y="10" width="10" height="10" fill="#9ec5f0"/><rect x="30" y="10" width="10" height="10" fill="#f3b7a6"/><rect x="10" y="20" width="10" height="10" fill="#9ec5f0"/><rect x="20" y="20" width="10" height="10" fill="#1f6fd0"/><rect x="30" y="20" width="10" height="10" fill="#cfe0f5"/><rect x="10" y="30" width="10" height="10" fill="#f3b7a6"/><rect x="20" y="30" width="10" height="10" fill="#cfe0f5"/><rect x="30" y="30" width="10" height="10" fill="#1f6fd0"/>',
-    mv_pca:'<circle cx="18" cy="30" r="2.4" fill="#1f6fd0"/><circle cx="24" cy="26" r="2.4" fill="#1f6fd0"/><circle cx="30" cy="32" r="2.4" fill="#1f6fd0"/><circle cx="36" cy="18" r="2.4" fill="#1f6fd0"/><path d="M28 26L44 12M28 26L16 14" stroke="#e0603c" stroke-width="1.6"/>',
-    mv_forest:'<path d="M28 6v34" stroke="#9aa3b1" stroke-dasharray="3 3"/><path d="M14 14h20M20 24h22M10 34h26" stroke="#1f6fd0" stroke-width="1.6"/><rect x="22" y="11" width="6" height="6" fill="#e0603c"/><rect x="29" y="21" width="6" height="6" fill="#1f6fd0"/><rect x="20" y="31" width="6" height="6" fill="#1f6fd0"/>',
-    roc:'<path d="M8 40L8 16C16 10 28 8 46 8" stroke="#1f6fd0" stroke-width="2" fill="none"/><path d="M8 40L46 8" stroke="#c9d0da" stroke-dasharray="3 3"/>'
+    surv_km:'<path d="M8 10h8v6h8v10h8v10h14" stroke="#F0A22E" stroke-width="2" fill="none"/><path d="M8 12h6v10h10v14h6v6h14" stroke="#DE5C33" stroke-width="2" fill="none"/>',
+    pie:'<path d="M28 24L28 6A18 18 0 0 1 44 30Z" fill="#F0A22E"/><path d="M28 24L44 30A18 18 0 0 1 12 34Z" fill="#DE5C33"/><path d="M28 24L12 34A18 18 0 0 1 28 6Z" fill="#7C1D1D"/>',
+    donut:'<path d="M28 24L28 6A18 18 0 0 1 44 30Z" fill="#F0A22E"/><path d="M28 24L44 30A18 18 0 0 1 12 34Z" fill="#DE5C33"/><path d="M28 24L12 34A18 18 0 0 1 28 6Z" fill="#7C1D1D"/><circle cx="28" cy="24" r="8" fill="#fff"/>',
+    mv_corrheat:'<rect x="10" y="10" width="10" height="10" fill="#F0A22E"/><rect x="20" y="10" width="10" height="10" fill="#9ec5f0"/><rect x="30" y="10" width="10" height="10" fill="#f3b7a6"/><rect x="10" y="20" width="10" height="10" fill="#9ec5f0"/><rect x="20" y="20" width="10" height="10" fill="#F0A22E"/><rect x="30" y="20" width="10" height="10" fill="#cfe0f5"/><rect x="10" y="30" width="10" height="10" fill="#f3b7a6"/><rect x="20" y="30" width="10" height="10" fill="#cfe0f5"/><rect x="30" y="30" width="10" height="10" fill="#F0A22E"/>',
+    mv_pca:'<circle cx="18" cy="30" r="2.4" fill="#F0A22E"/><circle cx="24" cy="26" r="2.4" fill="#F0A22E"/><circle cx="30" cy="32" r="2.4" fill="#F0A22E"/><circle cx="36" cy="18" r="2.4" fill="#F0A22E"/><path d="M28 26L44 12M28 26L16 14" stroke="#DE5C33" stroke-width="1.6"/>',
+    mv_forest:'<path d="M28 6v34" stroke="#9aa3b1" stroke-dasharray="3 3"/><path d="M14 14h20M20 24h22M10 34h26" stroke="#F0A22E" stroke-width="1.6"/><rect x="22" y="11" width="6" height="6" fill="#DE5C33"/><rect x="29" y="21" width="6" height="6" fill="#F0A22E"/><rect x="20" y="31" width="6" height="6" fill="#F0A22E"/>',
+    roc:'<path d="M8 40L8 16C16 10 28 8 46 8" stroke="#F0A22E" stroke-width="2" fill="none"/><path d="M8 40L46 8" stroke="#c9d0da" stroke-dasharray="3 3"/>'
   }[k]||'<rect x="10" y="12" width="34" height="28" fill="none" stroke="#9aa3b1" stroke-width="2"/>';
   return '<svg width="56" height="48" viewBox="0 0 56 48">'+c+"</svg>";
 }
@@ -107,6 +107,8 @@ function renderInspector(g){
      ['"Times New Roman", serif',"Times New Roman"],['"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif',"游ゴシック/ヒラギノ"],
      ['"Hiragino Mincho ProN","Yu Mincho",serif',"游明朝/ヒラギノ明朝"],["Georgia, serif","Georgia"]])
    +optNum(o,"fs","本文サイズ",6,36,1)+optNum(o,"fsAxis","目盛サイズ",6,36,1)+optNum(o,"fsTitle","題字サイズ",6,40,1)
+   +optChk(o,"bold","文字を太字にする（Prism風）")
+   +insRow("文字・軸の色",'<input type="color" data-opt="ink" value="'+(o.ink||"#000000")+'">')
    +'</div></details>';
   if(!isPie){
     h+='<details class="acc" open><summary>軸</summary><div class="body">'
@@ -120,7 +122,8 @@ function renderInspector(g){
      +optSel(o,"frame","枠線",[["L","L字（左と下）"],["full","四方を囲む"],["none","なし"]])
      +optChk(o,"gridY","横のグリッド線")+optChk(o,"gridX","縦のグリッド線")
      +optChk(o,"tickOut","目盛を外向きにする")
-     +optNum(o,"tickLen","目盛の長さ",0,20,1)
+     +'<div class="grid2">'+optNum(o,"tickLen","目盛の長さ",0,20,1)+optNum(o,"tickWidth","目盛の太さ",0.4,6,0.2)+"</div>"
+     +optNum(o,"axisWidth","軸線の太さ",0.5,8,0.2)
      +"</div></details>";
   }
   h+='<details class="acc" open><summary>データの表示</summary><div class="body">';
@@ -135,6 +138,10 @@ function renderInspector(g){
      +optNum(o,"pointSize","点の大きさ",1,24,0.5)
      +'<div class="grid2">'+optNum(o,"barWidth","棒/箱の幅",0.1,1,0.02)+optNum(o,"barStroke","枠線の太さ",0,6,0.1)+"</div>"
      +optChk(o,"barFill","塗りつぶす")
+     +optSel(o,"barOutline","棒・箱の枠線",[["black","黒（Prism風）"],["color","データの色"],["none","なし"]])
+     +optChk(o,"pointStroke","データ点に黒い縁をつける")
+     +optSel(o,"valueLabels","値のラベル",[["none","表示しない"],["value","平均値を表示"],["n","n数を表示"]])
+     +optSel(o,"meanLineStyle","中心線の線種",[["solid","実線"],["dash","破線"]])
      +optSel(o,"sortBars","並び順",[["none","表の順番どおり"],["asc","値の小さい順"],["desc","値の大きい順"]])
      +optNum(o,"barOpacity","塗りの濃さ",0.1,1,0.05)
      +optNum(o,"lineWidth","線の太さ",0.4,8,0.1)
@@ -142,8 +149,13 @@ function renderInspector(g){
   }
   if(g.gtype==="col_box"||g.gtype==="grp_box")
     h+=optSel(o,"boxWhisker","ひげの定義",[["tukey","Tukey（1.5×IQR）"],["minmax","最小〜最大"],["p1090","10〜90パーセンタイル"]]);
-  if(g.gtype==="col_violin")h+=optNum(o,"violinWidth","バイオリンの幅",0.2,1.2,0.05);
+  if(g.gtype==="col_violin")h+=optNum(o,"violinWidth","バイオリンの幅",0.2,1.2,0.05)
+    +optChk(o,"violinQuartiles","中央値・四分位を破線で描く");
   if(g.gtype==="grp_stack")h+=optChk(o,"stackPct","100%積み上げにする");
+  if(g.gtype==="grp_bar")h+=optSel(o,"barLayout","棒の並べ方",[["interleaved","集合（行ごとにまとめる）"],["separated","分離（データセットごとに並べる）"]]);
+  if(g.gtype==="grp_heat"||g.gtype==="mv_corrheat")h+=optSel(o,"heatColors","配色",
+    [["viridis","Viridis（Prism標準）"],["bwr","青-白-赤"],["blues","ブルー"],["warm","暖色"],["gray","グレースケール"]])
+    +optSel(o,"valueLabels","セルに数値を書く",[["none","書かない"],["value","書く"]]);
   if(isPie)h+=optSel(o,"pieLabels","ラベル",[["pct","割合(%)"],["value","実数"],["name","項目名"],["none","なし"]])
     +(g.gtype==="donut"?optNum(o,"donut","中央の穴の割合",0.1,0.9,0.05):"");
   if(isKM)h+=optChk(o,"censorTicks","打ち切りを縦線で示す")+optChk(o,"showBand","95%信頼帯を表示")
@@ -164,7 +176,7 @@ function renderInspector(g){
        +'<select data-gsym="'+i+'" style="width:88px">'+SYMBOLS.map(s=>'<option value="'+s+'"'+(gr.symbol===s?" selected":"")+">"+symbolName(s).split(" ")[0]+"</option>").join("")+"</select></div>";
     });
     h+=insRow("配色テーマ",'<select data-pal="1" style="max-width:190px">'
-      +[["prism","PrismLab 標準"],["cud","色覚バリアフリー"],["nature","Nature風"],["gray","グレースケール"],["warm","暖色系"],["cool","寒色系"]]
+      +[["prism","Prism標準（橙〜青）"],["vivid","ビビッド"],["cud","色覚バリアフリー"],["nature","Nature風"],["gray","グレースケール"],["warm","暖色系"],["cool","寒色系"]]
         .map(x=>'<option value="'+x[0]+'"'+(o.palette===x[0]?" selected":"")+">"+x[1]+"</option>").join("")+"</select>")
      +'<button class="tbtn" data-applypal="1" style="margin-top:6px">配色をデータセットに適用</button>'
      +"</div></details>";
@@ -176,7 +188,7 @@ function renderInspector(g){
   if(!isPie){
     h+='<details class="acc"><summary>有意差の表示</summary><div class="body">'
      +optChk(o,"autoBracket","解析結果から自動でブラケットを描く")
-     +optSel(o,"bracketStyle","表示形式",[["star","* / ** / ns"],["starOnly","有意なものだけ *"],["p","P値を書く"]])
+     +optSel(o,"bracketStyle","表示形式",[["star","* / ** / ns"],["starOnly","有意なものだけ *"],["p","P = 0.0032 の形式"],["num","数値のみ（Prism風）"]])
      +'<p class="mini">解析（t検定・ANOVAなど）を実行すると、その結果が自動で反映されます。</p>'
      +'<button class="tbtn" data-act="addbracket">＋ 手動でブラケットを追加</button>';
     if(o.brackets&&o.brackets.length){

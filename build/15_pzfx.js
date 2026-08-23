@@ -35,7 +35,7 @@ function prismTableToSheet(t,index){
   const tVals=rowTitles?(childrenByTag(rowTitles,"Subcolumn")[0]?subcolValues(childrenByTag(rowTitles,"Subcolumn")[0]):[]):[];
   if(xCol)sh.xTitle=directTitle(xCol)||sh.xTitle;
   yCols.forEach((c,i)=>sh.groups.push({name:directTitle(c)||("列"+(i+1)),
-    color:GCOLORS[i%GCOLORS.length],symbol:SYMBOLS[i%SYMBOLS.length]}));
+    color:GCOLORS[i%GCOLORS.length],symbol:"circle"}));
   if(!sh.groups.length)sh.groups.push({name:"値",color:GCOLORS[0],symbol:SYMBOLS[0]});
   let nRows=Math.max(xVals.length,tVals.length,
     ...colData.map(c=>Math.max(0,...c.map(s=>s.length))));

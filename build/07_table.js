@@ -208,7 +208,7 @@ function clearSelection(sh){
 }
 function addGroup(sh){
   const g=sh.groups.length;
-  sh.groups.push({name:defaultGroupName(sh.ttype,g),color:GCOLORS[g%GCOLORS.length],symbol:SYMBOLS[g%SYMBOLS.length]});
+  sh.groups.push({name:defaultGroupName(sh.ttype,g),color:GCOLORS[g%GCOLORS.length],symbol:"circle"});
   sh.rows.forEach(r=>r.v.push(new Array(sh.sub).fill("")));
   refreshDeps(sh);
 }

@@ -2049,7 +2049,7 @@ function pcaAnalyze(M,names){ // M: n×p（行=観測）
 /* =====================================================================
    プロジェクト状態とデータモデル
    ===================================================================== */
-const GCOLORS=["#1f6fd0","#e0603c","#2fa36b","#8258c8","#e8a51b","#3aa0d8","#d84a3f","#26a69a","#ec407a","#7e57c2","#8d6e63","#546e7a"];
+const GCOLORS=["#F0A22E","#DE5C33","#7C1D1D","#8B44AC","#3F6FD1","#7FBEEA","#2E9B57","#C94F8A","#4C4C4C","#B8A22E","#1f6fd0","#26a69a"];
 const SYMBOLS=["circle","square","triangle","triangle-down","diamond","plus","cross","star","hexagon","bar"];
 const TTYPES={
   xy:{name:"XY",icon:"📈",desc:"X（濃度・時間など）に対しY値。回帰・相関・用量反応曲線に。"},
@@ -2077,7 +2077,7 @@ function makeDataSheet(ttype,name){
   const sh={id:uid(),kind:"data",ttype:t,name:name||(TTYPES[t].name+"データ"),
     sub:ns,subMode:"rep",xTitle:t==="survival"?"時間":"X",yTitle:"Y",
     xFormat:"numbers",groups:[],rows:[]};
-  for(let g=0;g<ng;g++)sh.groups.push({name:defaultGroupName(t,g),color:GCOLORS[g%GCOLORS.length],symbol:SYMBOLS[g%SYMBOLS.length]});
+  for(let g=0;g<ng;g++)sh.groups.push({name:defaultGroupName(t,g),color:GCOLORS[g%GCOLORS.length],symbol:"circle"});
   for(let r=0;r<nr;r++)sh.rows.push(newRow(ng,ns));
   if(t==="grouped"||t==="contingency"||t==="parts"||t==="nested")sh.rows.forEach((r,i)=>r.t=defaultRowName(t,i));
   return sh;
@@ -2702,7 +2702,7 @@ function clearSelection(sh){
 }
 function addGroup(sh){
   const g=sh.groups.length;
-  sh.groups.push({name:defaultGroupName(sh.ttype,g),color:GCOLORS[g%GCOLORS.length],symbol:SYMBOLS[g%SYMBOLS.length]});
+  sh.groups.push({name:defaultGroupName(sh.ttype,g),color:GCOLORS[g%GCOLORS.length],symbol:"circle"});
   sh.rows.forEach(r=>r.v.push(new Array(sh.sub).fill("")));
   refreshDeps(sh);
 }
@@ -2965,7 +2965,7 @@ function applyGrid(grid,opts,name){
   const nG=Math.max(1,width-start);
   for(let g=0;g<nG;g++){
     const nm=header&&header[start+g]!==undefined&&String(header[start+g]).trim()!==""?String(header[start+g]):defaultGroupName(sh.ttype,g);
-    sh.groups.push({name:nm,color:GCOLORS[g%GCOLORS.length],symbol:SYMBOLS[g%SYMBOLS.length]});
+    sh.groups.push({name:nm,color:GCOLORS[g%GCOLORS.length],symbol:"circle"});
   }
   body.forEach(r=>{
     const row=newRow(nG,1);
@@ -4897,7 +4897,8 @@ ANALYSES.roc={
    グラフ描画エンジン（依存なしSVG）
    ===================================================================== */
 const PALETTES={
-  prism:["#1f6fd0","#e0603c","#2fa36b","#8258c8","#e8a51b","#3aa0d8","#d84a3f","#26a69a","#ec407a","#7e57c2"],
+  prism:["#F0A22E","#DE5C33","#7C1D1D","#8B44AC","#3F6FD1","#7FBEEA","#2E9B57","#C94F8A","#4C4C4C","#B8A22E"],
+  vivid:["#1f6fd0","#e0603c","#2fa36b","#8258c8","#e8a51b","#3aa0d8","#d84a3f","#26a69a","#ec407a","#7e57c2"],
   cud:["#0072B2","#D55E00","#009E73","#CC79A7","#E69F00","#56B4E9","#F0E442","#000000"],
   nature:["#3C5488","#E64B35","#00A087","#4DBBD5","#F39B7F","#8491B4","#91D1C2","#DC0000"],
   gray:["#333333","#777777","#aaaaaa","#cccccc","#555555","#999999","#bbbbbb","#e0e0e0"],
@@ -4905,22 +4906,45 @@ const PALETTES={
   cool:["#1f6fd0","#26a69a","#5c6bc0","#00838f","#3949ab","#0097a7","#7986cb","#4dd0e1"]
 };
 function gopt(g){
-  const d={w:430,h:330,title:"",xlab:"",ylab:"",font:"Arial, Helvetica, sans-serif",fs:12,fsTitle:14,fsAxis:12,
+  const d={w:430,h:330,title:"",xlab:"",ylab:"",
+    font:'Arial, "Helvetica Neue", Helvetica, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif',
+    fs:14,fsTitle:17,fsAxis:13,bold:true,ink:"#000000",
     xmin:"",xmax:"",ymin:"",ymax:"",xlog:false,ylog:false,ytickStep:"",xtickStep:"",
-    frame:"L",gridY:false,gridX:false,tickOut:true,tickLen:5,
-    err:"sd",errCap:7,errDir:"both",errWidth:1.4,
-    showPoints:true,pointSize:6,jitter:true,pointStroke:false,
-    barWidth:0.62,barStroke:1.2,barFill:true,barOpacity:1,
-    lineWidth:1.8,connect:true,curve:false,
+    frame:"L",gridY:false,gridX:false,tickOut:true,tickLen:7,axisWidth:2.6,tickWidth:2.4,
+    err:"sd",errCap:10,errDir:"both",errWidth:2,
+    showPoints:true,pointSize:8,jitter:true,pointStroke:true,
+    barWidth:0.6,barStroke:1.6,barFill:true,barOpacity:1,barOutline:"black",
+    lineWidth:2.6,connect:true,curve:false,
     showFit:true,showBand:false,showCI:false,
     legend:true,legendPos:"right",palette:"prism",
     autoBracket:true,brackets:[],bracketStyle:"star",
-    meanLine:"mean",sortBars:"none",baseline:0,
+    meanLine:"mean",meanLineStyle:"solid",sortBars:"none",baseline:0,
+    valueLabels:"none",barLayout:"interleaved",
     yTitleRotate:true,pieLabels:"pct",donut:0.55,atRisk:false,censorTicks:true,kmPct:true,
-    violinWidth:0.8,boxWhisker:"tukey",stackPct:false,logBase:10,capRadius:0};
+    violinWidth:0.85,violinQuartiles:true,boxWhisker:"tukey",stackPct:false,
+    heatColors:"viridis",logBase:10,capRadius:0,dpi:3};
   return Object.assign(d,g.opts||{});
 }
 function palOf(o,i){const p=PALETTES[o.palette]||PALETTES.prism;return p[i%p.length];}
+function inkOf(o){return o.ink||"#000000";}
+function strokeOfBar(o,color){
+  return o.barOutline==="none"?color:(o.barOutline==="color"?color:inkOf(o));
+}
+/* ---- 連続カラースケール ---- */
+const VIRIDIS=[[68,1,84],[72,40,120],[62,74,137],[49,104,142],[38,130,142],[31,158,137],[53,183,121],[109,205,89],[180,222,44],[253,231,37]];
+const BWR=[[5,48,97],[33,102,172],[67,147,195],[146,197,222],[209,229,240],[247,247,247],[253,219,199],[244,165,130],[214,96,77],[178,24,43],[103,0,31]];
+const BLUES=[[247,251,255],[222,235,247],[198,219,239],[158,202,225],[107,174,214],[66,146,198],[33,113,181],[8,81,156],[8,48,107]];
+const WARMS=[[255,245,235],[254,230,206],[253,208,162],[253,174,107],[253,141,60],[241,105,19],[217,72,1],[166,54,3],[127,39,4]];
+const GRAYS=[[255,255,255],[240,240,240],[217,217,217],[189,189,189],[150,150,150],[115,115,115],[82,82,82],[37,37,37],[0,0,0]];
+function rampColor(ramp,t){
+  t=Math.max(0,Math.min(1,t));
+  const n=ramp.length-1,f=t*n,i=Math.min(n-1,Math.floor(f)),r=f-i;
+  const a=ramp[i],b=ramp[i+1];
+  return "rgb("+Math.round(a[0]+(b[0]-a[0])*r)+","+Math.round(a[1]+(b[1]-a[1])*r)+","+Math.round(a[2]+(b[2]-a[2])*r)+")";
+}
+function heatRamp(o){
+  return {viridis:VIRIDIS,bwr:BWR,blues:BLUES,warm:WARMS,gray:GRAYS}[o.heatColors]||VIRIDIS;
+}
 function niceNum(r,round){
   const e=Math.floor(Math.log10(r)),f=r/Math.pow(10,e);
   let nf;
@@ -4972,21 +4996,20 @@ function fmtTick(v){
   return (+v.toFixed(dec)).toString();
 }
 function fmtNumShort(v){return (+v.toPrecision(3)).toString();}
-function txtW(s,fs){ // 概算文字幅（日本語は全角扱い）
+function txtW(s,fs,bold){
   let w=0;
-  for(const c of String(s).replace(/<[^>]+>/g,""))w+=/[ -~]/.test(c)?0.55:1;
-  return w*fs;
+  for(const c of String(s).replace(/<[^>]+>/g,""))w+=/[ -~]/.test(c)?0.56:1;
+  return w*fs*(bold?1.07:1);
 }
 function sym(shape,cx,cy,r,fill,stroke,sw){
-  const a=[];
   const s=(pts)=>'<polygon points="'+pts+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+sw+'"/>';
   switch(shape){
     case "square":return '<rect x="'+(cx-r)+'" y="'+(cy-r)+'" width="'+2*r+'" height="'+2*r+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+sw+'"/>';
     case "triangle":return s([cx+","+(cy-r*1.15),(cx-r)+","+(cy+r*0.75),(cx+r)+","+(cy+r*0.75)].join(" "));
     case "triangle-down":return s([cx+","+(cy+r*1.15),(cx-r)+","+(cy-r*0.75),(cx+r)+","+(cy-r*0.75)].join(" "));
     case "diamond":return s([cx+","+(cy-r*1.2),(cx+r*1.05)+","+cy,cx+","+(cy+r*1.2),(cx-r*1.05)+","+cy].join(" "));
-    case "plus":return '<path d="M'+(cx-r)+' '+cy+'H'+(cx+r)+'M'+cx+' '+(cy-r)+'V'+(cy+r)+'" stroke="'+(fill==="none"?stroke:fill)+'" stroke-width="'+(sw+1.1)+'" fill="none"/>';
-    case "cross":return '<path d="M'+(cx-r*0.8)+' '+(cy-r*0.8)+'L'+(cx+r*0.8)+' '+(cy+r*0.8)+'M'+(cx+r*0.8)+' '+(cy-r*0.8)+'L'+(cx-r*0.8)+' '+(cy+r*0.8)+'" stroke="'+(fill==="none"?stroke:fill)+'" stroke-width="'+(sw+1.1)+'" fill="none"/>';
+    case "plus":return '<path d="M'+(cx-r)+' '+cy+'H'+(cx+r)+'M'+cx+' '+(cy-r)+'V'+(cy+r)+'" stroke="'+(fill==="none"?stroke:fill)+'" stroke-width="'+(sw+1.4)+'" fill="none"/>';
+    case "cross":return '<path d="M'+(cx-r*0.8)+' '+(cy-r*0.8)+'L'+(cx+r*0.8)+' '+(cy+r*0.8)+'M'+(cx+r*0.8)+' '+(cy-r*0.8)+'L'+(cx-r*0.8)+' '+(cy+r*0.8)+'" stroke="'+(fill==="none"?stroke:fill)+'" stroke-width="'+(sw+1.4)+'" fill="none"/>';
     case "star":{
       let p="";
       for(let i=0;i<10;i++){
@@ -5004,41 +5027,45 @@ function sym(shape,cx,cy,r,fill,stroke,sw){
     default:return '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+sw+'"/>';
   }
 }
-function tspanText(x,y,s,o){
-  o=o||{};
-  return '<text x="'+x+'" y="'+y+'"'+(o.anchor?' text-anchor="'+o.anchor+'"':"")
-   +' font-size="'+(o.fs||12)+'"'+(o.bold?' font-weight="700"':"")
-   +(o.fill?' fill="'+o.fill+'"':' fill="#1d2430"')
-   +(o.rot?' transform="rotate('+o.rot+' '+x+' '+y+')"':"")
-   +(o.style?' style="'+o.style+'"':"")+">"+s+"</text>";
+function symFill(o,color){return o.barFill===false?"#ffffff":color;}
+function symStroke(o,color){return o.pointStroke?inkOf(o):color;}
+function tspanText(x,y,s,op){
+  op=op||{};
+  return '<text x="'+x+'" y="'+y+'"'+(op.anchor?' text-anchor="'+op.anchor+'"':"")
+   +' font-size="'+(op.fs||12)+'"'+(op.bold===false?"":' font-weight="'+(op.weight||700)+'"')
+   +(op.fill?' fill="'+op.fill+'"':' fill="#000000"')
+   +(op.rot?' transform="rotate('+op.rot+' '+x+' '+y+')"':"")
+   +(op.style?' style="'+op.style+'"':"")+">"+s+"</text>";
 }
-/* ---- プロット枠の生成 ---- */
+/* ---- プロット枠の生成（Prism風：太い黒軸・外向き目盛・太字ラベル） ---- */
 function startPlot(o,xs,ys){
-  const fs=o.fsAxis,fsT=o.fsTitle;
-  // Y軸ラベル幅の見積り
+  const fs=o.fsAxis,fsT=o.fsTitle,ink=inkOf(o),bold=o.bold!==false;
+  const aw=o.axisWidth,tw=o.tickWidth;
   let ytk=[];
   if(ys.log){const t=logTicks(ys.min,ys.max);ytk=t.major;ys._minor=t.minor;}
-  else ytk=linTicks(ys.min,ys.max,6,+o.ytickStep||0);
-  const yLabW=Math.max(...ytk.map(v=>txtW(fmtTick(v),fs)),10);
-  const mL=Math.round(yLabW+12+(ys.title?fs+12:0));
+  else ytk=(ys.ticks&&ys.ticks.length>1)?ys.ticks:linTicks(ys.min,ys.max,6,+o.ytickStep||0);
+  const yLabW=Math.max(...ytk.map(v=>txtW(fmtTick(v),fs,bold)),10);
+  const mL=Math.round(yLabW+o.tickLen+8+(ys.title?o.fs+12:0));
   let xtk=[],xcats=null,rotX=0;
   if(xs.type==="cat"){
     xcats=xs.cats;
-    const maxw=Math.max(...xcats.map(c=>txtW(c,fs)),1);
-    const slot=(o.w)/Math.max(1,xcats.length);
-    if(maxw>slot*0.95)rotX=xcats.length>8?-90:-35;
+    const maxw=Math.max(...xcats.map(c=>txtW(c,fs,bold)),1);
+    const slot=o.w/Math.max(1,xcats.length);
+    if(maxw>slot*0.78)rotX=-45;
   }else{
     if(xs.log){const t=logTicks(xs.min,xs.max);xtk=t.major;xs._minor=t.minor;}
-    else xtk=linTicks(xs.min,xs.max,6,+o.xtickStep||0);
+    else xtk=(xs.ticks&&xs.ticks.length>1)?xs.ticks:linTicks(xs.min,xs.max,6,+o.xtickStep||0);
   }
   let xLabH=fs+6;
-  if(rotX)xLabH=Math.max(...xcats.map(c=>txtW(c,fs)))*(rotX===-90?1:0.62)+10;
-  const mB=Math.round(xLabH+(xs.title?fs+10:0)+8);
-  const mT=Math.round((o.title?fsT+12:6)+8+(o._headroom||0));
+  if(rotX)xLabH=Math.max(...xcats.map(c=>txtW(c,fs,bold)))*0.72+12;
+  const mB=Math.round(xLabH+o.tickLen+(xs.title?o.fs+12:0)+8);
+  const titleY=o.title?fsT+10:0;
+  const mT=Math.round((o.title?fsT+20:10)+(o._headroom||0));
   const legendItems=ys.legend||[];
+  const swW=Math.round(fs*1.15);
   let mR=16;
   if(o.legend&&legendItems.length&&o.legendPos==="right")
-    mR=Math.round(Math.max(...legendItems.map(l=>txtW(l.name,fs)))+34);
+    mR=Math.round(Math.max(...legendItems.map(l=>txtW(l.name,fs,bold)))+swW*2.4+22);
   const plotW=o.w,plotH=o.h;
   const W=mL+plotW+mR,H=mT+plotH+mB;
   const px0=mL,px1=mL+plotW,py0=mT,py1=mT+plotH;
@@ -5050,68 +5077,82 @@ function startPlot(o,xs,ys){
                      :py1-(v-ys.min)/(ys.max-ys.min)*plotH;
   const band=xs.type==="cat"?plotW/xcats.length:0;
   let pre="";
-  // グリッド
-  if(o.gridY)pre+=ytk.map(v=>'<line x1="'+px0+'" y1="'+Y(v)+'" x2="'+px1+'" y2="'+Y(v)+'" stroke="#e7ebf1" stroke-width="1"/>').join("");
-  if(o.gridX&&xs.type!=="cat")pre+=xtk.map(v=>'<line x1="'+X(v)+'" y1="'+py0+'" x2="'+X(v)+'" y2="'+py1+'" stroke="#e7ebf1" stroke-width="1"/>').join("");
-  // 目盛と軸
+  if(o.gridY)pre+=ytk.map(v=>'<line x1="'+px0+'" y1="'+Y(v)+'" x2="'+px1+'" y2="'+Y(v)+'" stroke="#d7dde6" stroke-width="1"/>').join("");
+  if(o.gridX&&xs.type!=="cat")pre+=xtk.map(v=>'<line x1="'+X(v)+'" y1="'+py0+'" x2="'+X(v)+'" y2="'+py1+'" stroke="#d7dde6" stroke-width="1"/>').join("");
   const tl=o.tickLen,dir=o.tickOut?1:-1;
   let post="";
   ytk.forEach(v=>{
     const y=Y(v);
-    post+='<line x1="'+px0+'" y1="'+y+'" x2="'+(px0-tl*dir)+'" y2="'+y+'" stroke="#1d2430" stroke-width="1.1"/>';
-    post+=tspanText(px0-tl*dir-4,y+fs*0.35,fmtTick(v),{anchor:"end",fs});
+    post+='<line x1="'+px0+'" y1="'+y+'" x2="'+(px0-tl*dir)+'" y2="'+y+'" stroke="'+ink+'" stroke-width="'+tw+'"/>';
+    post+=tspanText(px0-tl*dir-5,y+fs*0.35,fmtTick(v),{anchor:"end",fs,bold,fill:ink});
   });
   if(ys._minor&&ys.log)ys._minor.forEach(v=>{
-    post+='<line x1="'+px0+'" y1="'+Y(v)+'" x2="'+(px0-tl*0.5*dir)+'" y2="'+Y(v)+'" stroke="#1d2430" stroke-width="0.8"/>';
+    post+='<line x1="'+px0+'" y1="'+Y(v)+'" x2="'+(px0-tl*0.55*dir)+'" y2="'+Y(v)+'" stroke="'+ink+'" stroke-width="'+(tw*0.7)+'"/>';
   });
   if(xs.type==="cat"){
     xcats.forEach((c,i)=>{
+      if(c==="")return;
       const x=X(i);
-      post+='<line x1="'+x+'" y1="'+py1+'" x2="'+x+'" y2="'+(py1+tl*dir)+'" stroke="#1d2430" stroke-width="1.1"/>';
-      post+=rotX?tspanText(x,py1+tl*dir+(rotX===-90?4:8),esc(c),{anchor:"end",fs,rot:rotX})
-                :tspanText(x,py1+tl*dir+fs+2,esc(c),{anchor:"middle",fs});
+      post+='<line x1="'+x+'" y1="'+py1+'" x2="'+x+'" y2="'+(py1+tl*dir)+'" stroke="'+ink+'" stroke-width="'+tw+'"/>';
+      post+=rotX?tspanText(x+fs*0.25,py1+tl*dir+fs*0.9,esc(c),{anchor:"end",fs,bold,rot:rotX,fill:ink})
+                :tspanText(x,py1+tl*dir+fs+2,esc(c),{anchor:"middle",fs,bold,fill:ink});
     });
   }else{
     xtk.forEach(v=>{
       const x=X(v);
-      post+='<line x1="'+x+'" y1="'+py1+'" x2="'+x+'" y2="'+(py1+tl*dir)+'" stroke="#1d2430" stroke-width="1.1"/>';
-      post+=tspanText(x,py1+tl*dir+fs+2,fmtTick(v),{anchor:"middle",fs});
+      post+='<line x1="'+x+'" y1="'+py1+'" x2="'+x+'" y2="'+(py1+tl*dir)+'" stroke="'+ink+'" stroke-width="'+tw+'"/>';
+      post+=tspanText(x,py1+tl*dir+fs+2,fmtTick(v),{anchor:"middle",fs,bold,fill:ink});
     });
     if(xs._minor&&xs.log)xs._minor.forEach(v=>{
-      post+='<line x1="'+X(v)+'" y1="'+py1+'" x2="'+X(v)+'" y2="'+(py1+tl*0.5*dir)+'" stroke="#1d2430" stroke-width="0.8"/>';
+      post+='<line x1="'+X(v)+'" y1="'+py1+'" x2="'+X(v)+'" y2="'+(py1+tl*0.55*dir)+'" stroke="'+ink+'" stroke-width="'+(tw*0.7)+'"/>';
     });
   }
-  // 枠線
-  if(o.frame==="full")post+='<rect x="'+px0+'" y="'+py0+'" width="'+plotW+'" height="'+plotH+'" fill="none" stroke="#1d2430" stroke-width="1.3"/>';
-  else if(o.frame==="L")post+='<path d="M'+px0+' '+py0+'V'+py1+'H'+px1+'" fill="none" stroke="#1d2430" stroke-width="1.3"/>';
-  else if(o.frame==="LB")post+='<path d="M'+px0+' '+py0+'V'+py1+'H'+px1+'" fill="none" stroke="#1d2430" stroke-width="1.3"/>';
-  // 軸タイトル
-  if(ys.title)post+=tspanText(12,(py0+py1)/2,esc(ys.title),{anchor:"middle",fs:o.fs,bold:true,rot:-90});
-  if(xs.title)post+=tspanText((px0+px1)/2,H-6,esc(xs.title),{anchor:"middle",fs:o.fs,bold:true});
-  if(o.title)post+=tspanText((px0+px1)/2,mT-10,esc(o.title),{anchor:"middle",fs:fsT,bold:true});
-  // 凡例
+  // 軸線（Prism流に目盛の範囲だけ引く）
+  const yA0=Y(ytk[ytk.length-1]),yA1=Y(ytk[0]);
+  const xA0=xs.type==="cat"?px0:X(xtk[0]),xA1=xs.type==="cat"?px1:X(xtk[xtk.length-1]);
+  if(o.frame==="full")post+='<rect x="'+px0+'" y="'+py0+'" width="'+plotW+'" height="'+plotH+'" fill="none" stroke="'+ink+'" stroke-width="'+aw+'"/>';
+  else if(o.frame!=="none"){
+    post+='<line x1="'+px0+'" y1="'+yA0+'" x2="'+px0+'" y2="'+yA1+'" stroke="'+ink+'" stroke-width="'+aw+'" stroke-linecap="square"/>'
+      +'<line x1="'+xA0+'" y1="'+py1+'" x2="'+xA1+'" y2="'+py1+'" stroke="'+ink+'" stroke-width="'+aw+'" stroke-linecap="square"/>';
+  }
+  if(ys.title)post+=tspanText(o.fs*0.9,(py0+py1)/2,esc(ys.title),{anchor:"middle",fs:o.fs,bold,rot:-90,fill:ink});
+  if(xs.title)post+=tspanText((px0+px1)/2,H-6,esc(xs.title),{anchor:"middle",fs:o.fs,bold,fill:ink});
+  if(o.title)post+=tspanText((px0+px1)/2,titleY,esc(o.title),{anchor:"middle",fs:fsT,bold,fill:ink});
   if(o.legend&&legendItems.length&&o.legendPos!=="none"){
+    const gap=fs+11;
     if(o.legendPos==="right"){
-      let ly=py0+10;
+      let ly=py0+fs;
       legendItems.forEach(l=>{
-        post+=l.shape?sym(l.shape,px1+16,ly-4,5,l.fill||l.color,l.color,1.2)
-          :'<rect x="'+(px1+10)+'" y="'+(ly-10)+'" width="12" height="12" fill="'+l.color+'" opacity="'+(l.opacity||1)+'"/>';
-        post+=tspanText(px1+26,ly,esc(l.name),{fs});
-        ly+=fs+8;
+        post+=legendMark(o,l,px1+14,ly-fs*0.35,swW);
+        post+=tspanText(px1+14+swW*2.1,ly,esc(l.name),{fs,bold,fill:ink});
+        ly+=gap;
       });
     }else{
       let lx=px0;
-      const ly=py0-6;
+      const ly=py0-8;
       legendItems.forEach(l=>{
-        post+=l.shape?sym(l.shape,lx+6,ly-4,5,l.fill||l.color,l.color,1.2)
-          :'<rect x="'+lx+'" y="'+(ly-10)+'" width="12" height="12" fill="'+l.color+'"/>';
-        post+=tspanText(lx+16,ly,esc(l.name),{fs});
-        lx+=txtW(l.name,fs)+34;
+        post+=legendMark(o,l,lx,ly-fs*0.35,swW);
+        post+=tspanText(lx+swW*2.1,ly,esc(l.name),{fs,bold,fill:ink});
+        lx+=txtW(l.name,fs,bold)+swW*2.6+16;
       });
     }
   }
-  return {W,H,px0,px1,py0,py1,X,Y,band,pre,post,ytk,xtk,fs,
-    clip:'<clipPath id="cp"><rect x="'+(px0-2)+'" y="'+(py0-2)+'" width="'+(plotW+4)+'" height="'+(plotH+4)+'"/></clipPath>'};
+  return {W,H,px0,px1,py0,py1,X,Y,band,pre,post,ytk,xtk,fs,ink,bold,rotX,
+    clip:'<clipPath id="cp"><rect x="'+(px0-3)+'" y="'+(py0-3)+'" width="'+(plotW+6)+'" height="'+(plotH+6)+'"/></clipPath>'};
+}
+function legendMark(o,l,x,y,sw){
+  const ink=inkOf(o);
+  if(l.line&&!l.shape){
+    return '<line x1="'+x+'" y1="'+y+'" x2="'+(x+sw*1.7)+'" y2="'+y+'" stroke="'+l.color+'" stroke-width="'+o.lineWidth+'"/>'
+      +'<line x1="'+(x+sw*0.85)+'" y1="'+(y-sw*0.45)+'" x2="'+(x+sw*0.85)+'" y2="'+(y+sw*0.45)+'" stroke="'+l.color+'" stroke-width="'+(o.lineWidth*0.8)+'"/>';
+  }
+  if(l.shape){
+    let s='<line x1="'+x+'" y1="'+y+'" x2="'+(x+sw*1.7)+'" y2="'+y+'" stroke="'+l.color+'" stroke-width="'+o.lineWidth+'"/>';
+    s+=sym(l.shape,x+sw*0.85,y,o.pointSize/2,l.fill||l.color,o.pointStroke?ink:l.color,1.2);
+    return s;
+  }
+  return '<rect x="'+x+'" y="'+(y-sw*0.55)+'" width="'+sw*1.35+'" height="'+sw*1.1+'" fill="'+l.color
+    +'" fill-opacity="'+(l.opacity||1)+'" stroke="'+ink+'" stroke-width="1.2"/>';
 }
 function wrapSVG(o,P,body,overlay){
   return '<svg xmlns="http://www.w3.org/2000/svg" width="'+P.W+'" height="'+P.H+'" viewBox="0 0 '+P.W+' '+P.H+'" '
@@ -5121,27 +5162,40 @@ function wrapSVG(o,P,body,overlay){
     +P.pre+'<g clip-path="url(#cp)">'+body+"</g>"+P.post+(overlay||"")+"</svg>";
 }
 /* ---- 範囲の自動決定 ---- */
+function niceRange(lo,hi,n,step){
+  if(!(hi>lo))return [lo,hi];
+  let d;
+  if(step&&step>0)d=step;
+  else d=niceNum(niceNum(hi-lo,false)/((n||6)-1),true);
+  if(!(d>0))return [lo,hi];
+  const gl=Math.floor(lo/d+1e-9)*d,gh=Math.ceil(hi/d-1e-9)*d;
+  return [+gl.toPrecision(12),+gh.toPrecision(12)];
+}
 function autoRange(vals,o,axis){
-  const mn=+o[axis+"min"],mx=+o[axis+"max"];
-  const has=(s)=>s!==""&&s!==null&&s!==undefined&&isFinite(+s);
+  const has=(x)=>x!==""&&x!==null&&x!==undefined&&isFinite(+x);
   let lo=Math.min(...vals),hi=Math.max(...vals);
   if(!isFinite(lo)||!isFinite(hi)){lo=0;hi=1;}
-  if(lo===hi){lo-=Math.abs(lo)*0.1+1;hi+=Math.abs(hi)*0.1+1;}
+  if(lo===hi){const p=Math.abs(lo)*0.1+1;lo-=p;hi+=p;}
   const log=o[axis+"log"];
+  let ticks=null;
   if(log){
     const pos=vals.filter(v=>v>0);
     lo=pos.length?Math.min(...pos):1;hi=pos.length?Math.max(...pos):10;
     lo=Math.pow(10,Math.floor(Math.log10(lo)));
     hi=Math.pow(10,Math.ceil(Math.log10(hi)));
   }else{
-    const pad=(hi-lo)*0.08;
-    lo-=pad;hi+=pad;
-    if(axis==="y"){
-      const t=linTicks(lo,hi,6,+o.ytickStep||0);
-      if(t.length){lo=Math.min(lo,t[0]);hi=Math.max(hi,t[t.length-1]);}
-    }
+    const span=(hi-lo)||Math.abs(hi)||1;
+    const step=+o[axis+"tickStep"];
+    const d=(step>0)?step:niceNum(niceNum(span*1.12,false)/5,true);
+    let gl=Math.floor(lo/d+1e-9)*d,gh=Math.ceil(hi/d-1e-9)*d;
+    if(!(gh>gl))gh=gl+d;
+    ticks=[];
+    for(let v=gl;v<=gh+d*1e-9;v+=d)ticks.push(+v.toPrecision(12));
+    lo=ticks[0];hi=ticks[ticks.length-1];
   }
-  return {min:has(o[axis+"min"])?+o[axis+"min"]:lo,max:has(o[axis+"max"])?+o[axis+"max"]:hi,log:!!log};
+  const min=has(o[axis+"min"])?+o[axis+"min"]:lo;
+  const max=has(o[axis+"max"])?+o[axis+"max"]:hi;
+  return {min,max,log:!!log,ticks:(!log&&min===lo&&max===hi)?ticks:null};
 }
 function jit(i,n,band,on,seed){
   if(!on||n<=1)return 0;
@@ -5182,6 +5236,19 @@ function errBarSvg(x,c,lo,hi,o,color){
     +'<line x1="'+(x-cap)+'" y1="'+lo+'" x2="'+(x+cap)+'" y2="'+lo+'" stroke="'+color+'" stroke-width="'+w+'"/>';
   return s;
 }
+function meanLineSvg(o,x1,x2,y,color){
+  const dash=o.meanLineStyle==="dash"?' stroke-dasharray="7 5"':"";
+  return '<line x1="'+x1+'" y1="'+y+'" x2="'+x2+'" y2="'+y+'" stroke="'+(color||inkOf(o))+'" stroke-width="'+(o.errWidth+0.8)+'"'+dash+'/>';
+}
+function safeMin(){
+  const v=[].slice.call(arguments).filter(x=>isFinite(x));
+  return v.length?Math.min.apply(null,v):NaN;
+}
+function valueLabel(o,x,y,d,n){
+  if(o.valueLabels==="none"||!d||!isFinite(y))return "";
+  const t=o.valueLabels==="n"?("n = "+n):fmtNumShort(o.meanLine==="median"?d.median:d.mean);
+  return tspanText(x,y-6,t,{anchor:"middle",fs:o.fsAxis*0.95,bold:o.bold!==false,fill:inkOf(o)});
+}
 function kde(v,lo,hi,n){
   const s=sd(v)||1,iqrv=quantile(v,0.75)-quantile(v,0.25);
   const h=0.9*Math.min(s,iqrv/1.34||s)*Math.pow(v.length,-0.2)||1;
@@ -5195,10 +5262,15 @@ function kde(v,lo,hi,n){
   return out;
 }
 /* ---- 有意差ブラケット ---- */
+function pShort(p){
+  if(p===null||p===undefined||!isFinite(p))return "";
+  if(p<0.0001)return "<0.0001";
+  return p<0.001?String(+p.toPrecision(2)):p.toFixed(4);
+}
 function bracketSvg(P,o,items,tops,ymaxPix){
   if(!items||!items.length)return "";
   let s="";
-  const gap=Math.max(14,o.fs*1.3);
+  const gap=Math.max(16,o.fs*1.5);
   let level=0;
   const used=[];
   items.forEach(b=>{
@@ -5211,18 +5283,19 @@ function bracketSvg(P,o,items,tops,ymaxPix){
     let guard=0;
     while(used.some(u=>!(u.hi<lo-6||u.lo>hi+6)&&Math.abs(u.y-y)<gap*0.85)&&guard++<20)y-=gap;
     used.push({lo,hi,y});
-    const label=o.bracketStyle==="p"?(b.p<0.0001?"P < 0.0001":"P = "+(b.p<0.001?b.p.toPrecision(2):b.p.toFixed(4))):(b.star||star(b.p));
+    const label=o.bracketStyle==="p"?("P "+(b.p<0.0001?"< 0.0001":"= "+pShort(b.p)))
+      :o.bracketStyle==="num"?pShort(b.p):(b.star||star(b.p));
     if(o.bracketStyle==="starOnly"&&label==="ns")return;
-    const tick=5;
-    s+='<path d="M'+lo+' '+(y+tick)+'V'+y+'H'+hi+'V'+(y+tick)+'" fill="none" stroke="#1d2430" stroke-width="1.1"/>';
-    s+=tspanText((lo+hi)/2,y-3,esc(label),{anchor:"middle",fs:label==="ns"?o.fs*0.85:o.fs*1.05,bold:label!=="ns"});
+    const tick=6;
+    s+='<path d="M'+lo+' '+(y+tick)+'V'+y+'H'+hi+'V'+(y+tick)+'" fill="none" stroke="'+inkOf(o)+'" stroke-width="'+(o.errWidth-0.2)+'"/>';
+    s+=tspanText((lo+hi)/2,y-4,esc(label),{anchor:"middle",fs:/^[*]+$/.test(label)?o.fs*1.35:o.fs,bold:true,fill:inkOf(o)});
     for(let k=Math.min(b.i,b.j);k<=Math.max(b.i,b.j);k++)if(tops[k]!==undefined)tops[k]=Math.min(tops[k],y-4);
   });
   return s;
 }
 function prepBrackets(g,sh,o,names){
   const list=(o.autoBracket?autoBrackets(g,sh,names):[]).concat(o.brackets||[]);
-  o._headroom=list.length?Math.round(list.length*(o.fs*1.4)+10):0;
+  o._headroom=list.length?Math.round(list.length*Math.max(16,o.fs*1.5)+o.fs*1.5):0;
   return list;
 }
 function autoBrackets(g,sh,names){
@@ -5261,11 +5334,13 @@ GRAPHTYPES.col_scatter={name:"散布ドットプロット",cat:"縦列",for:["co
       const c=centerOf(s.d,o),[lo,hi]=errLoHi(s.d,o);
       s.v.forEach((v,k)=>{
         const jx=x+jit(k,s.v.length,P.band*0.6,o.jitter,idx+1);
-        body+=sym(s.symbol,jx,P.Y(v),o.pointSize/2,o.barFill?s.color:"none",s.color,1.3);
+        body+=sym(s.symbol,jx,P.Y(v),o.pointSize/2,symFill(o,s.color),symStroke(o,s.color),1.3);
       });
-      body+=errBarSvg(x,P.Y(c),P.Y(lo),P.Y(hi),o,"#1d2430");
-      if(o.meanLine!=="none")body+='<line x1="'+(x-P.band*0.22)+'" y1="'+P.Y(c)+'" x2="'+(x+P.band*0.22)+'" y2="'+P.Y(c)+'" stroke="#1d2430" stroke-width="2"/>';
-      tops[idx]=Math.min(P.Y(hi),P.Y(Math.max(...s.v)));
+      body+=errBarSvg(x,P.Y(c),P.Y(lo),P.Y(hi),o,inkOf(o));
+      if(o.meanLine!=="none")body+=meanLineSvg(o,x-P.band*0.26,x+P.band*0.26,P.Y(c));
+      const topS=safeMin(P.Y(hi),P.Y(Math.max(...s.v)),P.Y(c));
+      body+=valueLabel(o,x,topS,s.d,s.v.length);
+      tops[idx]=topS;
     });
     return wrapSVG(o,P,body,bracketSvg(P,o,br,tops));
   }};
@@ -5278,7 +5353,7 @@ GRAPHTYPES.col_bar={name:"棒グラフ（平均±エラーバー）",cat:"縦列
     const all=S.flatMap(s=>errLoHi(s.d,o)).concat(S.map(s=>centerOf(s.d,o)),[o.baseline]);
     if(o.showPoints)S.forEach(s=>all.push(...s.v));
     const ys=autoRange(all.filter(isFinite),o,"y");
-    if(!o.ylog&&ys.min>0&&o.ymin==="")ys.min=Math.min(0,ys.min);
+    if(!o.ylog&&ys.min>0&&o.ymin==="")ys.min=0;
     ys.title=o.ylab||sh.yTitle||"";
     const P=startPlot(o,{type:"cat",cats:S.map(s=>s.name),title:o.xlab||""},ys);
     let body="";const tops={};
@@ -5287,13 +5362,15 @@ GRAPHTYPES.col_bar={name:"棒グラフ（平均±エラーバー）",cat:"縦列
       const x=P.X(idx),c=centerOf(s.d,o),[lo,hi]=errLoHi(s.d,o);
       const y0=P.Y(Math.max(ys.min,o.baseline||ys.min)),y1=P.Y(c);
       body+='<rect x="'+(x-bw/2)+'" y="'+Math.min(y0,y1)+'" width="'+bw+'" height="'+Math.abs(y0-y1)
-        +'" fill="'+(o.barFill?s.color:"#fff")+'" fill-opacity="'+o.barOpacity+'" stroke="'+s.color+'" stroke-width="'+o.barStroke+'"/>';
-      body+=errBarSvg(x,y1,P.Y(lo),P.Y(hi),o,"#1d2430");
+        +'" fill="'+(o.barFill?s.color:"#fff")+'" fill-opacity="'+o.barOpacity+'" stroke="'+strokeOfBar(o,s.color)+'" stroke-width="'+o.barStroke+'"/>';
+      body+=errBarSvg(x,y1,P.Y(lo),P.Y(hi),o,inkOf(o));
       if(o.showPoints)s.v.forEach((v,k)=>{
         const jx=x+jit(k,s.v.length,bw*0.7,o.jitter,idx+3);
-        body+=sym(s.symbol,jx,P.Y(v),o.pointSize/2.4,"#ffffff","#1d2430",1.1);
+        body+=sym(s.symbol,jx,P.Y(v),o.pointSize/2.4,"#ffffff",inkOf(o),1.2);
       });
-      tops[idx]=Math.min(P.Y(hi),o.showPoints?P.Y(Math.max(...s.v)):P.Y(hi));
+      const topB=safeMin(P.Y(hi),y1,o.showPoints?P.Y(Math.max(...s.v)):NaN);
+      body+=valueLabel(o,x,topB,s.d,s.v.length);
+      tops[idx]=topB-(o.valueLabels!=="none"?o.fsAxis*1.2:0);
     });
     return wrapSVG(o,P,body,bracketSvg(P,o,br,tops));
   }};
@@ -5318,19 +5395,20 @@ GRAPHTYPES.col_box={name:"箱ひげ図",cat:"縦列",for:["column","parts","mult
         wLo=Math.min(...s.v.filter(v=>v>=d.q1-1.5*iqr));wHi=Math.max(...s.v.filter(v=>v<=d.q3+1.5*iqr));
         outs=s.v.filter(v=>v<wLo||v>wHi);
       }
+      const bs=strokeOfBar(o,s.color);
       body+='<rect x="'+(x-bw/2)+'" y="'+P.Y(d.q3)+'" width="'+bw+'" height="'+(P.Y(d.q1)-P.Y(d.q3))
-        +'" fill="'+(o.barFill?s.color:"#fff")+'" fill-opacity="'+(o.barFill?0.35:1)+'" stroke="'+s.color+'" stroke-width="'+o.barStroke+'"/>';
-      body+='<line x1="'+(x-bw/2)+'" y1="'+P.Y(d.median)+'" x2="'+(x+bw/2)+'" y2="'+P.Y(d.median)+'" stroke="'+s.color+'" stroke-width="2.2"/>';
-      body+='<line x1="'+x+'" y1="'+P.Y(d.q3)+'" x2="'+x+'" y2="'+P.Y(wHi)+'" stroke="'+s.color+'" stroke-width="1.3"/>';
-      body+='<line x1="'+x+'" y1="'+P.Y(d.q1)+'" x2="'+x+'" y2="'+P.Y(wLo)+'" stroke="'+s.color+'" stroke-width="1.3"/>';
-      body+='<line x1="'+(x-bw*0.28)+'" y1="'+P.Y(wHi)+'" x2="'+(x+bw*0.28)+'" y2="'+P.Y(wHi)+'" stroke="'+s.color+'" stroke-width="1.3"/>';
-      body+='<line x1="'+(x-bw*0.28)+'" y1="'+P.Y(wLo)+'" x2="'+(x+bw*0.28)+'" y2="'+P.Y(wLo)+'" stroke="'+s.color+'" stroke-width="1.3"/>';
-      if(o.meanLine==="mean")body+=sym("plus",x,P.Y(d.mean),4,s.color,s.color,1);
+        +'" fill="'+(o.barFill?s.color:"#fff")+'" fill-opacity="'+(o.barFill?0.55:1)+'" stroke="'+bs+'" stroke-width="'+o.barStroke+'"/>';
+      body+='<line x1="'+(x-bw/2)+'" y1="'+P.Y(d.median)+'" x2="'+(x+bw/2)+'" y2="'+P.Y(d.median)+'" stroke="'+bs+'" stroke-width="'+(o.barStroke+1.2)+'"/>';
+      body+='<line x1="'+x+'" y1="'+P.Y(d.q3)+'" x2="'+x+'" y2="'+P.Y(wHi)+'" stroke="'+bs+'" stroke-width="'+o.barStroke+'"/>';
+      body+='<line x1="'+x+'" y1="'+P.Y(d.q1)+'" x2="'+x+'" y2="'+P.Y(wLo)+'" stroke="'+bs+'" stroke-width="'+o.barStroke+'"/>';
+      body+='<line x1="'+(x-bw*0.3)+'" y1="'+P.Y(wHi)+'" x2="'+(x+bw*0.3)+'" y2="'+P.Y(wHi)+'" stroke="'+bs+'" stroke-width="'+o.barStroke+'"/>';
+      body+='<line x1="'+(x-bw*0.3)+'" y1="'+P.Y(wLo)+'" x2="'+(x+bw*0.3)+'" y2="'+P.Y(wLo)+'" stroke="'+bs+'" stroke-width="'+o.barStroke+'"/>';
+      if(o.meanLine==="mean")body+=sym("plus",x,P.Y(d.mean),4.5,inkOf(o),inkOf(o),1);
       if(o.showPoints)s.v.forEach((v,k)=>{
         const jx=x+jit(k,s.v.length,bw*0.6,o.jitter,idx+5);
-        body+=sym(s.symbol,jx,P.Y(v),o.pointSize/2.6,"#ffffff",s.color,1);
+        body+=sym(s.symbol,jx,P.Y(v),o.pointSize/2.6,"#ffffff",inkOf(o),1.1);
       });
-      else outs.forEach(v=>body+=sym("circle",x,P.Y(v),o.pointSize/2.6,"#fff",s.color,1.1));
+      else outs.forEach(v=>body+=sym("circle",x,P.Y(v),o.pointSize/2.6,"#fff",inkOf(o),1.2));
       tops[idx]=P.Y(Math.max(wHi,...(o.showPoints?s.v:outs.concat([wHi]))));
     });
     return wrapSVG(o,P,body,bracketSvg(P,o,br,tops));
@@ -5353,13 +5431,15 @@ GRAPHTYPES.col_violin={name:"バイオリンプロット",cat:"縦列",for:["col
       const mx=Math.max(...dens.map(p=>p[1]))||1;
       const left=dens.map(p=>(x-p[1]/mx*bw/2)+","+P.Y(p[0]));
       const right=dens.slice().reverse().map(p=>(x+p[1]/mx*bw/2)+","+P.Y(p[0]));
-      body+='<polygon points="'+left.concat(right).join(" ")+'" fill="'+s.color+'" fill-opacity="0.28" stroke="'+s.color+'" stroke-width="1.3"/>';
-      const q1=P.Y(d.q1),q3=P.Y(d.q3);
-      body+='<rect x="'+(x-3)+'" y="'+q3+'" width="6" height="'+(q1-q3)+'" fill="#1d2430" opacity="0.75"/>';
-      body+='<line x1="'+x+'" y1="'+P.Y(d.min)+'" x2="'+x+'" y2="'+P.Y(d.max)+'" stroke="#1d2430" stroke-width="1" opacity="0.55"/>';
-      body+='<circle cx="'+x+'" cy="'+P.Y(d.median)+'" r="2.6" fill="#fff"/>';
+      body+='<polygon points="'+left.concat(right).join(" ")+'" fill="'+(o.barFill?s.color:"#fff")+'" fill-opacity="'+(o.barFill?0.55:1)+'" stroke="'+strokeOfBar(o,s.color)+'" stroke-width="'+o.barStroke+'"/>';
+      if(o.violinQuartiles){
+        const hw=bw*0.34;
+        body+='<line x1="'+(x-hw)+'" y1="'+P.Y(d.median)+'" x2="'+(x+hw)+'" y2="'+P.Y(d.median)+'" stroke="'+inkOf(o)+'" stroke-width="'+(o.barStroke+0.6)+'" stroke-dasharray="6 4"/>';
+        body+='<line x1="'+(x-hw*0.8)+'" y1="'+P.Y(d.q1)+'" x2="'+(x+hw*0.8)+'" y2="'+P.Y(d.q1)+'" stroke="'+inkOf(o)+'" stroke-width="'+o.barStroke+'" stroke-dasharray="4 4"/>';
+        body+='<line x1="'+(x-hw*0.8)+'" y1="'+P.Y(d.q3)+'" x2="'+(x+hw*0.8)+'" y2="'+P.Y(d.q3)+'" stroke="'+inkOf(o)+'" stroke-width="'+o.barStroke+'" stroke-dasharray="4 4"/>';
+      }
       if(o.showPoints)s.v.forEach((v,k)=>{
-        body+=sym(s.symbol,x+jit(k,s.v.length,bw*0.5,true,idx+9),P.Y(v),o.pointSize/3,s.color,s.color,0.8);
+        body+=sym(s.symbol,x+jit(k,s.v.length,bw*0.5,true,idx+9),P.Y(v),o.pointSize/3,symFill(o,s.color),symStroke(o,s.color),0.9);
       });
       tops[idx]=P.Y(d.max);
     });
@@ -5379,8 +5459,8 @@ GRAPHTYPES.col_float={name:"フローティングバー（範囲）",cat:"縦列
     S.forEach((s,idx)=>{
       const x=P.X(idx),d=s.d;
       body+='<rect x="'+(x-bw/2)+'" y="'+P.Y(d.max)+'" width="'+bw+'" height="'+(P.Y(d.min)-P.Y(d.max))
-        +'" fill="'+s.color+'" fill-opacity="0.3" stroke="'+s.color+'" stroke-width="'+o.barStroke+'"/>';
-      body+='<line x1="'+(x-bw/2)+'" y1="'+P.Y(centerOf(d,o))+'" x2="'+(x+bw/2)+'" y2="'+P.Y(centerOf(d,o))+'" stroke="'+s.color+'" stroke-width="2.4"/>';
+        +'" fill="'+s.color+'" fill-opacity="0.5" stroke="'+strokeOfBar(o,s.color)+'" stroke-width="'+o.barStroke+'"/>';
+      body+=meanLineSvg(o,x-bw/2,x+bw/2,P.Y(centerOf(d,o)));
       tops[idx]=P.Y(d.max);
     });
     return wrapSVG(o,P,body,bracketSvg(P,o,br,tops));
@@ -5406,13 +5486,13 @@ GRAPHTYPES.col_beforeafter={name:"前後プロット（対応線）",cat:"縦列
         const up=pts[pts.length-1][1]<pts[0][1];
         body+='<polyline points="'+pts.map(p=>p[0]+","+p[1]).join(" ")+'" fill="none" stroke="'+(o.palette==="gray"?"#888":(up?"#1f6fd0":"#e0603c"))+'" stroke-width="1.2" opacity="0.75"/>';
       }
-      pts.forEach((p,idx)=>{body+=sym(S[idx].symbol,p[0],p[1],o.pointSize/2.4,"#fff",S[idx].color,1.4);});
+      pts.forEach((p,idx)=>{body+=sym(S[idx].symbol,p[0],p[1],o.pointSize/2.4,symFill(o,S[idx].color),symStroke(o,S[idx].color),1.4);});
     }
     S.forEach((s,idx)=>{
       const x=P.X(idx),c=centerOf(s.d,o),[lo,hi]=errLoHi(s.d,o);
       if(o.meanLine!=="none"){
-        body+='<line x1="'+(x-P.band*0.2)+'" y1="'+P.Y(c)+'" x2="'+(x+P.band*0.2)+'" y2="'+P.Y(c)+'" stroke="#1d2430" stroke-width="2.4"/>';
-        body+=errBarSvg(x,P.Y(c),P.Y(lo),P.Y(hi),o,"#1d2430");
+        body+=meanLineSvg(o,x-P.band*0.24,x+P.band*0.24,P.Y(c));
+        body+=errBarSvg(x,P.Y(c),P.Y(lo),P.Y(hi),o,inkOf(o));
       }
       tops[idx]=P.Y(Math.max(...s.v));
     });
@@ -5434,7 +5514,7 @@ GRAPHTYPES.col_hist={name:"ヒストグラム（度数分布）",cat:"縦列",fo
     const ys=autoRange([0,Math.max(...hists.flat())*1.1],o,"y");
     ys.min=0;ys.title=o.ylab||"度数";
     ys.legend=S.map(s=>({name:s.name,color:s.color}));
-    const P=startPlot(o,{type:"num",min:mn,max:mx,log:false,title:o.xlab||sh.yTitle||"値"},ys);
+    const P=startPlot(o,{type:"num",min:mn,max:mx,log:false,ticks:null,title:o.xlab||sh.yTitle||"値"},ys);
     let body="";
     hists.forEach((h,si)=>{
       h.forEach((cnt,b)=>{
@@ -5526,10 +5606,10 @@ GRAPHTYPES.xy_scatter={name:"散布図（点のみ）",cat:"XY",for:["xy","multi
     const R=xyRanges(o,series,false);
     R.ys.title=o.ylab||sh.yTitle||"Y";
     R.ys.legend=series.map(s=>({name:s.name,color:s.color,shape:s.symbol,fill:s.color}));
-    const P=startPlot(o,{type:"num",min:R.xs.min,max:R.xs.max,log:R.xs.log,title:o.xlab||sh.xTitle||"X"},R.ys);
+    const P=startPlot(o,{type:"num",min:R.xs.min,max:R.xs.max,log:R.xs.log,ticks:R.xs.ticks,title:o.xlab||sh.xTitle||"X"},R.ys);
     let body="";
     series.forEach(s=>s.pts.forEach(p=>{
-      body+=sym(s.symbol,P.X(p[0]),P.Y(p[1]),o.pointSize/2,o.barFill?s.color:"#fff",s.color,1.3);
+      body+=sym(s.symbol,P.X(p[0]),P.Y(p[1]),o.pointSize/2,symFill(o,s.color),symStroke(o,s.color),1.3);
     }));
     if(o.showFit)body+=drawFits(sh,P,o,R.xs);
     return wrapSVG(o,P,body);
@@ -5542,7 +5622,7 @@ GRAPHTYPES.xy_line={name:"折れ線＋点",cat:"XY",for:["xy","multivar"],
     const R=xyRanges(o,series,true,true);
     R.ys.title=o.ylab||sh.yTitle||"Y";
     R.ys.legend=series.map(s=>({name:s.name,color:s.color,shape:s.symbol,fill:s.color}));
-    const P=startPlot(o,{type:"num",min:R.xs.min,max:R.xs.max,log:R.xs.log,title:o.xlab||sh.xTitle||"X"},R.ys);
+    const P=startPlot(o,{type:"num",min:R.xs.min,max:R.xs.max,log:R.xs.log,ticks:R.xs.ticks,title:o.xlab||sh.xTitle||"X"},R.ys);
     const hasFit=o.showFit&&fitCurves(sh).length>0;
     let body="";
     series.forEach(s=>{
@@ -5553,8 +5633,8 @@ GRAPHTYPES.xy_line={name:"折れ線＋点",cat:"XY",for:["xy","multivar"],
         const e=errLoHi(p,o);
         body+=errBarSvg(P.X(p.x),P.Y(p.mean),P.Y(e[0]),P.Y(e[1]),o,s.color);
       });
-      ms.forEach(p=>{body+=sym(s.symbol,P.X(p.x),P.Y(p.mean),o.pointSize/2,o.barFill?s.color:"#fff",s.color,1.4);});
-      if(o.showPoints)s.pts.forEach(p=>body+=sym("circle",P.X(p[0]),P.Y(p[1]),o.pointSize/4,s.color,s.color,0.6));
+      ms.forEach(p=>{body+=sym(s.symbol,P.X(p.x),P.Y(p.mean),o.pointSize/2,symFill(o,s.color),symStroke(o,s.color),1.4);});
+      if(o.showPoints)s.pts.forEach(p=>body+=sym("circle",P.X(p[0]),P.Y(p[1]),o.pointSize/4,s.color,s.color,0.7));
     });
     if(o.showFit)body+=drawFits(sh,P,o,R.xs);
     return wrapSVG(o,P,body);
@@ -5568,7 +5648,7 @@ GRAPHTYPES.xy_area={name:"面グラフ",cat:"XY",for:["xy"],
     if(R.ys.min>0)R.ys.min=0;
     R.ys.title=o.ylab||sh.yTitle||"Y";
     R.ys.legend=series.map(s=>({name:s.name,color:s.color}));
-    const P=startPlot(o,{type:"num",min:R.xs.min,max:R.xs.max,log:R.xs.log,title:o.xlab||sh.xTitle||"X"},R.ys);
+    const P=startPlot(o,{type:"num",min:R.xs.min,max:R.xs.max,log:R.xs.log,ticks:R.xs.ticks,title:o.xlab||sh.xTitle||"X"},R.ys);
     const hasFit=o.showFit&&fitCurves(sh).length>0;
     let body="";
     series.forEach(s=>{
@@ -5577,7 +5657,7 @@ GRAPHTYPES.xy_area={name:"面グラフ",cat:"XY",for:["xy"],
       const base=P.Y(Math.max(R.ys.min,o.baseline||0));
       body+='<polygon points="'+(P.X(ms[0].x)+","+base)+" "+ms.map(p=>P.X(p.x)+","+P.Y(p.mean)).join(" ")+" "+(P.X(ms[ms.length-1].x)+","+base)
         +'" fill="'+s.color+'" fill-opacity="0.28" stroke="'+s.color+'" stroke-width="'+o.lineWidth+'"/>';
-      if(o.showPoints)ms.forEach(p=>body+=sym(s.symbol,P.X(p.x),P.Y(p.mean),o.pointSize/2.4,s.color,s.color,1));
+      if(o.showPoints)ms.forEach(p=>body+=sym(s.symbol,P.X(p.x),P.Y(p.mean),o.pointSize/2.4,symFill(o,s.color),symStroke(o,s.color),1.2));
     });
     return wrapSVG(o,P,body);
   }};
@@ -5597,60 +5677,84 @@ function grpBase(g,sh,mode){
   return {o,cats,series};
 }
 GRAPHTYPES.grp_bar={name:"集合棒グラフ",cat:"グループ",for:["grouped","contingency","nested","parts","column"],
-  desc:"行を横軸、列（データセット）を隣り合う棒として並べます。",
+  desc:"行を横軸、列（データセット）を隣り合う棒として並べます。データセットごとに離して並べることもできます。",
   draw:(g,sh)=>{
     const B=grpBase(g,sh);if(!B)return emptySVG();
     const {o,cats,series}=B;
+    const sep=o.barLayout==="separated";
     const dPre=analysisData(sh.id,"anova2")||analysisData(sh.id,"rowtt");
-    const nPre=(o.autoBracket&&dPre&&dPre.comparisons)?dPre.comparisons.filter(c=>c.row!==undefined).length:0;
-    o._headroom=Math.min(3,Math.ceil(nPre/Math.max(1,cats.length)))*(o.fs*1.5)+(o.brackets||[]).length*(o.fs*1.4);
+    const nPre=(o.autoBracket&&dPre&&dPre.comparisons&&!sep)?dPre.comparisons.filter(c=>c.row!==undefined).length:0;
+    o._headroom=Math.min(3,Math.ceil(nPre/Math.max(1,cats.length)))*(o.fs*1.7)+(o.brackets||[]).length*(o.fs*1.5)
+      +(o.valueLabels!=="none"?o.fsAxis*1.5:0)+((nPre||(o.brackets||[]).length)?o.fs*1.2:0);
     const vals=[o.baseline||0];
     series.forEach(s=>s.cells.forEach(c=>{if(c.d){const e=errLoHi(c.d,o);vals.push(centerOf(c.d,o),e[0],e[1]);if(o.showPoints)vals.push(...c.v);}}));
     const ys=autoRange(vals.filter(isFinite),o,"y");
     if(ys.min>0&&o.ymin==="")ys.min=0;
     ys.title=o.ylab||sh.yTitle||"";
     ys.legend=series.map(s=>({name:s.name,color:s.color}));
-    const P=startPlot(o,{type:"cat",cats,title:o.xlab||""},ys);
-    let body="";const tops={};
-    const gw=P.band*o.barWidth,bw=gw/series.length;
-    cats.forEach((ct,ri)=>{
-      let top=P.py1;
+    // 分離配置では「データセット×行」を横軸に並べる（間に空カテゴリを挟む）
+    let axisCats=cats,slots=[];
+    if(sep){
+      axisCats=[];
       series.forEach((s,si)=>{
-        const c=s.cells[ri];
-        if(!c.d)return;
-        const x=P.X(ri)-gw/2+bw*(si+0.5);
-        const cv=centerOf(c.d,o),[lo,hi]=errLoHi(c.d,o);
-        const y0=P.Y(Math.max(ys.min,o.baseline||ys.min)),y1=P.Y(cv);
-        body+='<rect x="'+(x-bw*0.44)+'" y="'+Math.min(y0,y1)+'" width="'+bw*0.88+'" height="'+Math.abs(y0-y1)
-          +'" fill="'+(o.barFill?s.color:"#fff")+'" fill-opacity="'+o.barOpacity+'" stroke="'+s.color+'" stroke-width="'+o.barStroke+'"/>';
-        body+=errBarSvg(x,y1,P.Y(lo),P.Y(hi),o,"#1d2430");
-        if(o.showPoints)c.v.forEach((v,k)=>body+=sym(s.symbol,x+jit(k,c.v.length,bw*0.5,o.jitter,ri*10+si),P.Y(v),o.pointSize/2.8,"#fff","#1d2430",1));
-        top=Math.min(top,P.Y(hi),o.showPoints?P.Y(Math.max(...c.v)):P.Y(hi));
-      });
-      tops[ri]=top;
-    });
-    // 二元配置ANOVAの多重比較（行内比較）
-    let br=[];
-    const d2=dPre;
-    if(o.autoBracket&&d2&&d2.comparisons){
-      d2.comparisons.forEach(c=>{
-        if(c.row===undefined)return;
-        br.push({i:c.row,j:c.row,p:c.p,star:c.star,row:c.row,sub:[c.i,c.j]});
+        if(si>0){axisCats.push("");slots.push(null);}
+        cats.forEach((ct,ri)=>{axisCats.push(ct);slots.push({si,ri});});
       });
     }
-    // 行内ブラケット（棒の上に）
-    let over="";
-    br.forEach(b=>{
-      if(b.sub===undefined)return;
-      const gwx=P.X(b.row)-gw/2;
-      const x1=gwx+bw*(series.findIndex(s=>s.c===b.sub[0])+0.5);
-      const x2=gwx+bw*(series.findIndex(s=>s.c===b.sub[1])+0.5);
-      const y=tops[b.row]-14;
-      over+='<path d="M'+Math.min(x1,x2)+' '+(y+4)+'V'+y+'H'+Math.max(x1,x2)+'V'+(y+4)+'" fill="none" stroke="#1d2430" stroke-width="1.1"/>';
-      over+=tspanText((x1+x2)/2,y-3,b.star||star(b.p),{anchor:"middle",fs:o.fs,bold:true});
-      tops[b.row]=y-12;
-    });
-    return wrapSVG(o,P,body,over+bracketSvg(P,o,(o.brackets||[]),tops));
+    const P=startPlot(o,{type:"cat",cats:axisCats,title:o.xlab||""},ys);
+    let body="";const tops={};
+    const drawBar=(x,bw,s,c,ri,key)=>{
+      if(!c.d)return;
+      const cv=centerOf(c.d,o),[lo,hi]=errLoHi(c.d,o);
+      const y0=P.Y(Math.max(ys.min,o.baseline||ys.min)),y1=P.Y(cv);
+      body+='<rect x="'+(x-bw/2)+'" y="'+Math.min(y0,y1)+'" width="'+bw+'" height="'+Math.abs(y0-y1)
+        +'" fill="'+(o.barFill?s.color:"#fff")+'" fill-opacity="'+o.barOpacity+'" stroke="'+strokeOfBar(o,s.color)+'" stroke-width="'+o.barStroke+'"/>';
+      body+=errBarSvg(x,y1,P.Y(lo),P.Y(hi),o,inkOf(o));
+      if(o.showPoints)c.v.forEach((v,k)=>body+=sym(s.symbol,x+jit(k,c.v.length,bw*0.5,o.jitter,ri*10+s.c),P.Y(v),o.pointSize/2.8,"#fff",inkOf(o),1.1));
+      const top=safeMin(P.Y(hi),o.showPoints&&c.v.length?P.Y(Math.max(...c.v)):NaN,y1);
+      body+=valueLabel(o,x,top,c.d,c.v.length);
+      if(key!==undefined)tops[key]=safeMin(tops[key]===undefined?P.py1:tops[key],top-(o.valueLabels!=="none"?o.fsAxis*1.2:0));
+    };
+    if(sep){
+      const bw=P.band*o.barWidth;
+      slots.forEach((sl,i)=>{
+        if(!sl)return;
+        drawBar(P.X(i),bw,series[sl.si],series[sl.si].cells[sl.ri],sl.ri,i);
+      });
+    }else{
+      const gw=P.band*o.barWidth,bw=gw/series.length;
+      cats.forEach((ct,ri)=>{
+        let top=P.py1;
+        series.forEach((s,si)=>{
+          const c=s.cells[ri];
+          if(!c.d)return;
+          const x=P.X(ri)-gw/2+bw*(si+0.5);
+          drawBar(x,bw*0.88,s,c,ri);
+          const [lo,hi]=errLoHi(c.d,o);
+          top=safeMin(top,P.Y(hi),o.showPoints&&c.v.length?P.Y(Math.max(...c.v)):NaN,P.Y(centerOf(c.d,o)));
+        });
+        tops[ri]=top-(o.valueLabels!=="none"?o.fsAxis*1.2:0);
+      });
+      // 二元配置ANOVA等の行内比較を棒の上に描く
+      let over="";
+      if(o.autoBracket&&dPre&&dPre.comparisons){
+        dPre.comparisons.forEach(c=>{
+          if(c.row===undefined)return;
+          const i1=series.findIndex(s=>s.c===c.i),i2=series.findIndex(s=>s.c===c.j);
+          if(i1<0||i2<0)return;
+          const gwx=P.X(c.row)-gw/2;
+          const x1=gwx+bw*(i1+0.5),x2=gwx+bw*(i2+0.5);
+          const y=tops[c.row]-14;
+          const lab=o.bracketStyle==="p"?("P = "+pShort(c.p)):o.bracketStyle==="num"?pShort(c.p):(c.star||star(c.p));
+          if(o.bracketStyle==="starOnly"&&lab==="ns")return;
+          over+='<path d="M'+Math.min(x1,x2)+' '+(y+5)+'V'+y+'H'+Math.max(x1,x2)+'V'+(y+5)+'" fill="none" stroke="'+inkOf(o)+'" stroke-width="'+(o.errWidth-0.2)+'"/>';
+          over+=tspanText((x1+x2)/2,y-4,lab,{anchor:"middle",fs:o.fs,bold:o.bold!==false,fill:inkOf(o)});
+          tops[c.row]=y-o.fs-6;
+        });
+      }
+      return wrapSVG(o,P,body,over+bracketSvg(P,o,(o.brackets||[]),tops));
+    }
+    return wrapSVG(o,P,body,bracketSvg(P,o,(o.brackets||[]),tops));
   }};
 GRAPHTYPES.grp_stack={name:"積み上げ棒グラフ",cat:"グループ",for:["grouped","contingency","parts","column"],
   desc:"各行の中で値を積み上げます。構成比の比較に。",
@@ -5674,8 +5778,8 @@ GRAPHTYPES.grp_stack={name:"積み上げ棒グラフ",cat:"グループ",for:["g
         if(pct)v=totals[ri]?v/totals[ri]*100:0;
         const y0=P.Y(acc),y1=P.Y(acc+v);
         body+='<rect x="'+(P.X(ri)-bw/2)+'" y="'+y1+'" width="'+bw+'" height="'+Math.max(0,y0-y1)
-          +'" fill="'+s.color+'" fill-opacity="'+o.barOpacity+'" stroke="#fff" stroke-width="0.7"/>';
-        if(pct&&v>7)body+=tspanText(P.X(ri),(y0+y1)/2+4,fmt(v,0)+"%",{anchor:"middle",fs:o.fs*0.85,fill:"#fff",bold:true});
+          +'" fill="'+s.color+'" fill-opacity="'+o.barOpacity+'" stroke="'+strokeOfBar(o,s.color)+'" stroke-width="'+(o.barStroke*0.8)+'"/>';
+        if(pct&&v>7)body+=tspanText(P.X(ri),(y0+y1)/2+4,fmt(v,0)+"%",{anchor:"middle",fs:o.fsAxis*0.9,fill:"#fff",bold:true});
         acc+=v;
       });
     });
@@ -5699,10 +5803,10 @@ GRAPHTYPES.grp_scatter={name:"集合散布図",cat:"グループ",for:["grouped"
       series.forEach((s,si)=>{
         const c=s.cells[ri];if(!c.d)return;
         const x=P.X(ri)-gw/2+bw*(si+0.5);
-        c.v.forEach((v,k)=>body+=sym(s.symbol,x+jit(k,c.v.length,bw*0.55,o.jitter,ri*7+si),P.Y(v),o.pointSize/2.3,o.barFill?s.color:"#fff",s.color,1.2));
+        c.v.forEach((v,k)=>body+=sym(s.symbol,x+jit(k,c.v.length,bw*0.55,o.jitter,ri*7+si),P.Y(v),o.pointSize/2.3,symFill(o,s.color),symStroke(o,s.color),1.2));
         const cv=centerOf(c.d,o),[lo,hi]=errLoHi(c.d,o);
-        body+=errBarSvg(x,P.Y(cv),P.Y(lo),P.Y(hi),o,"#1d2430");
-        body+='<line x1="'+(x-bw*0.35)+'" y1="'+P.Y(cv)+'" x2="'+(x+bw*0.35)+'" y2="'+P.Y(cv)+'" stroke="#1d2430" stroke-width="2"/>';
+        body+=errBarSvg(x,P.Y(cv),P.Y(lo),P.Y(hi),o,inkOf(o));
+        body+=meanLineSvg(o,x-bw*0.38,x+bw*0.38,P.Y(cv));
         top=Math.min(top,P.Y(hi),P.Y(Math.max(...c.v)));
       });
       tops[ri]=top;
@@ -5729,11 +5833,11 @@ GRAPHTYPES.grp_box={name:"集合箱ひげ図",cat:"グループ",for:["grouped",
         const wLo=o.boxWhisker==="minmax"?d.min:Math.min(...c.v.filter(v=>v>=d.q1-1.5*iqr));
         const wHi=o.boxWhisker==="minmax"?d.max:Math.max(...c.v.filter(v=>v<=d.q3+1.5*iqr));
         body+='<rect x="'+(x-w/2)+'" y="'+P.Y(d.q3)+'" width="'+w+'" height="'+(P.Y(d.q1)-P.Y(d.q3))
-          +'" fill="'+s.color+'" fill-opacity="0.35" stroke="'+s.color+'" stroke-width="1.1"/>'
-          +'<line x1="'+(x-w/2)+'" y1="'+P.Y(d.median)+'" x2="'+(x+w/2)+'" y2="'+P.Y(d.median)+'" stroke="'+s.color+'" stroke-width="2"/>'
-          +'<line x1="'+x+'" y1="'+P.Y(d.q3)+'" x2="'+x+'" y2="'+P.Y(wHi)+'" stroke="'+s.color+'" stroke-width="1.1"/>'
-          +'<line x1="'+x+'" y1="'+P.Y(d.q1)+'" x2="'+x+'" y2="'+P.Y(wLo)+'" stroke="'+s.color+'" stroke-width="1.1"/>';
-        if(o.showPoints)c.v.forEach((v,k)=>body+=sym(s.symbol,x+jit(k,c.v.length,w*0.5,true,ri*3+si),P.Y(v),o.pointSize/3,"#fff",s.color,0.9));
+          +'" fill="'+(o.barFill?s.color:"#fff")+'" fill-opacity="'+(o.barFill?0.55:1)+'" stroke="'+strokeOfBar(o,s.color)+'" stroke-width="'+o.barStroke+'"/>'
+          +'<line x1="'+(x-w/2)+'" y1="'+P.Y(d.median)+'" x2="'+(x+w/2)+'" y2="'+P.Y(d.median)+'" stroke="'+strokeOfBar(o,s.color)+'" stroke-width="'+(o.barStroke+1)+'"/>'
+          +'<line x1="'+x+'" y1="'+P.Y(d.q3)+'" x2="'+x+'" y2="'+P.Y(wHi)+'" stroke="'+strokeOfBar(o,s.color)+'" stroke-width="'+o.barStroke+'"/>'
+          +'<line x1="'+x+'" y1="'+P.Y(d.q1)+'" x2="'+x+'" y2="'+P.Y(wLo)+'" stroke="'+strokeOfBar(o,s.color)+'" stroke-width="'+o.barStroke+'"/>';
+        if(o.showPoints)c.v.forEach((v,k)=>body+=sym(s.symbol,x+jit(k,c.v.length,w*0.5,true,ri*3+si),P.Y(v),o.pointSize/3,"#fff",inkOf(o),1));
       });
     });
     return wrapSVG(o,P,body);
@@ -5759,60 +5863,64 @@ GRAPHTYPES.grp_line={name:"折れ線（行＝時点）",cat:"グループ",for:[
         const e=errLoHi(p[2].d,o);
         body+=errBarSvg(p[0],p[1],P.Y(e[0]),P.Y(e[1]),o,s.color);
       });
-      pts.forEach(p=>body+=sym(s.symbol,p[0],p[1],o.pointSize/2,o.barFill?s.color:"#fff",s.color,1.4));
+      pts.forEach(p=>body+=sym(s.symbol,p[0],p[1],o.pointSize/2,symFill(o,s.color),symStroke(o,s.color),1.4));
     });
     return wrapSVG(o,P,body);
   }};
 GRAPHTYPES.grp_heat={name:"ヒートマップ",cat:"グループ",for:["grouped","multivar","contingency","nested"],
   desc:"行×列の値を色の濃淡で表します。発現データなどに。",
   draw:(g,sh)=>{
-    const o=gopt(g);
+    const o=gopt(g),ink=inkOf(o),bold=o.bold!==false;
     const {cats,series}=grpData(sh,o);
     if(!cats.length)return emptySVG();
     const vals=[];
     series.forEach(s=>s.cells.forEach(c=>{if(c.d)vals.push(c.d.mean);}));
     if(!vals.length)return emptySVG();
     const mn=o.ymin!==""?+o.ymin:Math.min(...vals),mx=o.ymax!==""?+o.ymax:Math.max(...vals);
-    const cw=Math.max(24,o.w/series.length),ch=Math.max(9,Math.min(40,o.h/cats.length));
+    const ramp=heatRamp(o);
+    const cw=Math.max(22,o.w/series.length),ch=Math.max(9,Math.min(44,o.h/cats.length));
     const fs=o.fsAxis;
-    const mL=Math.max(...cats.map(c=>txtW(c,fs)))+14;
-    const mT=Math.max(...series.map(s=>txtW(s.name,fs)))*0.6+18+(o.title?o.fsTitle+10:0);
-    const W=mL+cw*series.length+70,H=mT+ch*cats.length+30;
+    const mL=Math.max(...cats.map(c=>txtW(c,fs,bold)))+14;
+    const mT=Math.max(...series.map(s=>txtW(s.name,fs,bold)))*0.72+18+(o.title?o.fsTitle+12:0);
+    const mapW=cw*series.length,mapH=ch*cats.length;
+    const barW=Math.max(16,fs*1.25);
+    const W=mL+mapW+barW+90,H=mT+mapH+28;
     let body='<rect width="'+W+'" height="'+H+'" fill="#fff"/>';
-    const colorAt=(v)=>{
-      const t=Math.max(0,Math.min(1,(v-mn)/(mx-mn||1)));
-      const c1=[247,251,255],c2=[8,48,107];
-      if(o.palette==="warm"){const a=[255,245,235],b=[153,52,4];return "rgb("+a.map((x,i)=>Math.round(x+(b[i]-x)*t)).join(",")+")";}
-      if(o.palette==="cud"){const a=[5,48,97],b=[103,0,31],mid=[247,247,247];
-        return t<0.5?"rgb("+a.map((x,i)=>Math.round(x+(mid[i]-x)*t*2)).join(",")+")"
-                    :"rgb("+mid.map((x,i)=>Math.round(x+(b[i]-x)*(t-0.5)*2)).join(",")+")";}
-      return "rgb("+c1.map((x,i)=>Math.round(x+(c2[i]-x)*t)).join(",")+")";
-    };
     cats.forEach((ct,ri)=>{
-      body+=tspanText(mL-6,mT+ch*ri+ch/2+fs*0.35,esc(ct),{anchor:"end",fs});
+      body+=tspanText(mL-7,mT+ch*ri+ch/2+fs*0.35,esc(ct),{anchor:"end",fs,bold,fill:ink});
       series.forEach((s,ci)=>{
-        const c=s.cells[ri];
-        const x=mL+cw*ci,y=mT+ch*ri;
-        if(!c.d){body+='<rect x="'+x+'" y="'+y+'" width="'+cw+'" height="'+ch+'" fill="#f2f4f7"/>';return;}
-        body+='<rect x="'+x+'" y="'+y+'" width="'+cw+'" height="'+ch+'" fill="'+colorAt(c.d.mean)+'" stroke="#fff" stroke-width="0.6"/>';
-        if(o.pieLabels!=="none"&&ch>=16&&cw>=34){
-          const t=(c.d.mean-mn)/(mx-mn||1);
-          body+=tspanText(x+cw/2,y+ch/2+fs*0.32,fmtNumShort(c.d.mean),{anchor:"middle",fs:fs*0.8,fill:t>0.55?"#fff":"#1d2430"});
+        const c=s.cells[ri],x=mL+cw*ci,y=mT+ch*ri;
+        if(!c.d){
+          body+='<rect x="'+x+'" y="'+y+'" width="'+cw+'" height="'+ch+'" fill="#ffffff"/>'
+            +'<path d="M'+(x+cw*0.3)+' '+(y+ch*0.3)+'L'+(x+cw*0.7)+' '+(y+ch*0.7)
+            +'M'+(x+cw*0.7)+' '+(y+ch*0.3)+'L'+(x+cw*0.3)+' '+(y+ch*0.7)+'" stroke="'+ink+'" stroke-width="1"/>';
+          return;
         }
+        const t=(c.d.mean-mn)/(mx-mn||1);
+        body+='<rect x="'+x+'" y="'+y+'" width="'+cw+'" height="'+ch+'" fill="'+rampColor(ramp,t)+'"/>';
+        if(o.valueLabels!=="none"&&ch>=16&&cw>=34)
+          body+=tspanText(x+cw/2,y+ch/2+fs*0.32,fmtNumShort(c.d.mean),
+            {anchor:"middle",fs:fs*0.85,bold,fill:(t>0.62||t<0.18)?"#fff":ink});
       });
     });
+    body+='<rect x="'+mL+'" y="'+mT+'" width="'+mapW+'" height="'+mapH+'" fill="none" stroke="'+ink+'" stroke-width="'+o.axisWidth+'"/>';
     series.forEach((s,ci)=>{
-      body+=tspanText(mL+cw*ci+cw/2,mT-8,esc(s.name),{anchor:"start",fs,rot:-40});
+      body+=tspanText(mL+cw*ci+cw/2+fs*0.3,mT-8,esc(s.name),{anchor:"start",fs,bold,rot:-45,fill:ink});
     });
     // カラースケール
-    const bx=mL+cw*series.length+16,bh=Math.min(140,ch*cats.length);
-    for(let i=0;i<40;i++){
-      const v=mn+(mx-mn)*(1-i/39);
-      body+='<rect x="'+bx+'" y="'+(mT+bh*i/40)+'" width="14" height="'+(bh/40+0.6)+'" fill="'+colorAt(v)+'"/>';
-    }
-    body+=tspanText(bx+18,mT+8,fmtNumShort(mx),{fs:fs*0.85})+tspanText(bx+18,mT+bh,fmtNumShort(mn),{fs:fs*0.85});
-    if(o.title)body+=tspanText(W/2,16,esc(o.title),{anchor:"middle",fs:o.fsTitle,bold:true});
-    return '<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" font-family="'+o.font+'">'+body+"</svg>";
+    const bx=mL+mapW+26,bh=Math.min(Math.max(120,mapH*0.7),mapH);
+    const by=mT;
+    for(let i=0;i<60;i++)
+      body+='<rect x="'+bx+'" y="'+(by+bh*i/60)+'" width="'+barW+'" height="'+(bh/60+0.7)+'" fill="'+rampColor(ramp,1-i/60)+'"/>';
+    body+='<rect x="'+bx+'" y="'+by+'" width="'+barW+'" height="'+bh+'" fill="none" stroke="'+ink+'" stroke-width="1.6"/>';
+    linTicks(mn,mx,5).forEach(v=>{
+      const y=by+bh*(1-(v-mn)/(mx-mn||1));
+      body+='<line x1="'+(bx+barW)+'" y1="'+y+'" x2="'+(bx+barW+5)+'" y2="'+y+'" stroke="'+ink+'" stroke-width="1.6"/>'
+        +tspanText(bx+barW+8,y+fs*0.35,fmtTick(v),{fs:fs*0.92,bold,fill:ink});
+    });
+    if(o.ylab)body+=tspanText(bx,by-8,esc(o.ylab),{fs:fs*0.95,bold,fill:ink});
+    if(o.title)body+=tspanText(W/2,o.fsTitle+8,esc(o.title),{anchor:"middle",fs:o.fsTitle,bold,fill:ink});
+    return '<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" font-family="'+o.font+'" style="background:#fff">'+body+"</svg>";
   }};
 /* ---------- 生存曲線 ---------- */
 GRAPHTYPES.surv_km={name:"生存曲線（Kaplan-Meier）",cat:"生存",for:["survival"],
@@ -5833,7 +5941,7 @@ GRAPHTYPES.surv_km={name:"生存曲線（Kaplan-Meier）",cat:"生存",for:["sur
     const xs={min:o.xmin!==""?+o.xmin:0,max:o.xmax!==""?+o.xmax:maxT*1.02,log:false,type:"num",title:o.xlab||sh.xTitle||"時間"};
     const pctMode=o.kmPct!==false;
     const ys={min:o.ymin!==""?+o.ymin:0,max:o.ymax!==""?+o.ymax:(pctMode?100:1),log:false,
-      title:o.ylab||"生存率 (%)",legend:groups.map(gr=>({name:gr.name,color:gr.color}))};
+      title:o.ylab||(pctMode?"生存率 (%)":"生存率"),legend:groups.map(gr=>({name:gr.name,color:gr.color,line:true}))};
     const P=startPlot(o,xs,ys);
     const sc=(s)=>pctMode?s*100:s;
     let body="";
@@ -5859,7 +5967,7 @@ GRAPHTYPES.surv_km={name:"生存曲線（Kaplan-Meier）",cat:"生存",for:["sur
       }
       body+='<polyline points="'+pts.map(p=>p[0]+","+p[1]).join(" ")+'" fill="none" stroke="'+gr.color+'" stroke-width="'+o.lineWidth+'"/>';
       if(o.censorTicks)gr.km.censors.forEach(c=>{
-        body+='<line x1="'+P.X(c.t)+'" y1="'+(P.Y(sc(c.s))-5)+'" x2="'+P.X(c.t)+'" y2="'+(P.Y(sc(c.s))+5)+'" stroke="'+gr.color+'" stroke-width="1.5"/>';
+        body+='<line x1="'+P.X(c.t)+'" y1="'+(P.Y(sc(c.s))-6)+'" x2="'+P.X(c.t)+'" y2="'+(P.Y(sc(c.s))+6)+'" stroke="'+gr.color+'" stroke-width="'+(o.lineWidth*0.8)+'"/>';
       });
       if(o.meanLine==="median"&&gr.km.median!==null){
         body+='<line x1="'+P.X(gr.km.median)+'" y1="'+P.Y(sc(0.5))+'" x2="'+P.X(gr.km.median)+'" y2="'+P.py1+'" stroke="'+gr.color+'" stroke-width="1" stroke-dasharray="4 3"/>';
@@ -5869,8 +5977,8 @@ GRAPHTYPES.surv_km={name:"生存曲線（Kaplan-Meier）",cat:"生存",for:["sur
     // log-rank P値
     const d=analysisData(sh.id,"km");
     if(o.autoBracket&&d&&d.p!==null&&d.p!==undefined&&isFinite(d.p)){
-      const txt=d.p<0.0001?"log-rank P &lt; 0.0001":"log-rank P = "+(d.p<0.001?d.p.toPrecision(2):d.p.toFixed(4));
-      body+=tspanText(P.px1-8,P.py0+P.fs+8,txt,{anchor:"end",fs:o.fs,bold:true});
+      const txt=d.p<0.0001?"log-rank P &lt; 0.0001":"log-rank P = "+pShort(d.p);
+      body+=tspanText(P.px1-10,P.py0+P.fs+10,txt,{anchor:"end",fs:o.fs,bold:true,fill:inkOf(o)});
     }
     let svg=wrapSVG(o,P,body);
     if(o.atRisk){
@@ -5879,11 +5987,11 @@ GRAPHTYPES.surv_km={name:"生存曲線（Kaplan-Meier）",cat:"生存",for:["sur
       const extra=rowH*(groups.length+1)+14;
       svg=svg.replace(/height="(\d+(\.\d+)?)"/,(m,h)=>'height="'+(+h+extra)+'"')
              .replace(/viewBox="0 0 ([\d.]+) ([\d.]+)"/,(m,w,h)=>'viewBox="0 0 '+w+" "+(+h+extra)+'"');
-      let tbl=tspanText(P.px0,P.H+12,"Number at risk",{fs:o.fs*0.9,bold:true});
+      let tbl=tspanText(P.px0,P.H+12,"Number at risk",{fs:o.fs*0.9,bold:true,fill:inkOf(o)});
       groups.forEach((gr,i)=>{
         const y=P.H+12+rowH*(i+1);
         tbl+=tspanText(P.px0-8,y,esc(gr.name),{anchor:"end",fs:o.fs*0.9,fill:gr.color,bold:true});
-        marks.forEach(t=>tbl+=tspanText(P.X(t),y,String(gr.km.atRiskAtT(t)),{anchor:"middle",fs:o.fs*0.9}));
+        marks.forEach(t=>tbl+=tspanText(P.X(t),y,String(gr.km.atRiskAtT(t)),{anchor:"middle",fs:o.fs*0.9,bold:true,fill:inkOf(o)}));
       });
       svg=svg.replace("</svg>",tbl+"</svg>");
     }
@@ -5905,7 +6013,7 @@ function drawPie(g,sh,donut){
   if(!vals.length)return emptySVG("1列目に正の数値を入力してください");
   const R=Math.min(o.w,o.h)/2;
   const cx=R+130,cy=R+(o.title?o.fsTitle+16:14);
-  const W=cx+R+150,H=cy+R+24;
+  const W=cx+R+165,H=cy+R+(donut?26:42);
   let body='<rect width="'+W+'" height="'+H+'" fill="#fff"/>';
   let ang=-Math.PI/2;
   const inner=donut?R*o.donut:0;
@@ -5923,7 +6031,7 @@ function drawPie(g,sh,donut){
     }else{
       d="M"+cx+" "+cy+"L"+x1+" "+y1+"A"+R+" "+R+" 0 "+large+" 1 "+x2+" "+y2+"Z";
     }
-    body+='<path d="'+d+'" fill="'+col+'" stroke="#fff" stroke-width="1.6"/>';
+    body+='<path d="'+d+'" fill="'+col+'" stroke="'+inkOf(o)+'" stroke-width="'+Math.max(1.6,o.barStroke*1.4)+'"/>';
     if(o.pieLabels!=="none"&&frac>0.03){
       const mid=(ang+a2)/2,lr=inner?(R+inner)/2:R*0.65;
       const lx=cx+lr*Math.cos(mid),ly=cy+lr*Math.sin(mid);
@@ -5933,17 +6041,19 @@ function drawPie(g,sh,donut){
     ang=a2;
   });
   if(donut&&o.pieLabels!=="none")
-    body+=tspanText(cx,cy+6,"n = "+fmtNumShort(total),{anchor:"middle",fs:o.fs*1.2,bold:true});
+    body+=tspanText(cx,cy+6,"n = "+fmtNumShort(total),{anchor:"middle",fs:o.fs*1.2,bold:true,fill:inkOf(o)});
+  if(!donut)body+=tspanText(cx,cy+R+22,"Total = "+fmtNumShort(total),{anchor:"middle",fs:o.fs,bold:true,fill:inkOf(o)});
   if(o.legend){
     let ly=cy-R+10;
+    const sw=Math.round(o.fs*1.15);
     labels.forEach((L,i)=>{
-      body+='<rect x="'+(cx+R+18)+'" y="'+(ly-10)+'" width="12" height="12" fill="'+palOf(o,i)+'"/>';
-      body+=tspanText(cx+R+36,ly,esc(L)+"  "+fmt(vals[i]/total*100,1)+"%",{fs:o.fs});
-      ly+=o.fs+8;
+      body+=legendMark(o,{name:L,color:palOf(o,i)},cx+R+20,ly-o.fs*0.35,sw);
+      body+=tspanText(cx+R+20+sw*2.1,ly,esc(L)+"  "+fmt(vals[i]/total*100,1)+"%",{fs:o.fs,bold:o.bold!==false,fill:inkOf(o)});
+      ly+=o.fs+11;
     });
   }
-  if(o.title)body+=tspanText(W/2,o.fsTitle+8,esc(o.title),{anchor:"middle",fs:o.fsTitle,bold:true});
-  return '<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" font-family="'+o.font+'">'+body+"</svg>";
+  if(o.title)body+=tspanText(W/2,o.fsTitle+8,esc(o.title),{anchor:"middle",fs:o.fsTitle,bold:true,fill:inkOf(o)});
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" font-family="'+o.font+'" style="background:#fff">'+body+"</svg>";
 }
 GRAPHTYPES.pie={name:"円グラフ",cat:"割合",for:["parts","contingency","column"],
   desc:"全体に占める割合。項目が少ないときに。",draw:(g,sh)=>drawPie(g,sh,false)};
@@ -5951,9 +6061,9 @@ GRAPHTYPES.donut={name:"ドーナツグラフ",cat:"割合",for:["parts","contin
   desc:"中央に合計を表示できる円グラフ。",draw:(g,sh)=>drawPie(g,sh,true)};
 /* ---------- 相関ヒートマップ ---------- */
 GRAPHTYPES.mv_corrheat={name:"相関行列ヒートマップ",cat:"多変数",for:["multivar","column","xy"],
-  desc:"変数間の相関係数を色で表示します。先に「相関行列」の解析を実行してください。",
+  desc:"変数間の相関係数を青-白-赤で表示します。先に「相関行列」の解析を実行してください。",
   draw:(g,sh)=>{
-    const o=gopt(g);
+    const o=gopt(g),ink=inkOf(o),bold=o.bold!==false;
     let d=analysisData(sh.id,"corrmat");
     if(!d){
       const vs=sh.groups.map((_,i)=>i);
@@ -5966,29 +6076,37 @@ GRAPHTYPES.mv_corrheat={name:"相関行列ヒートマップ",cat:"多変数",fo
       d={matrix:M,names,pmatrix:M.map(r=>r.map(()=>1))};
     }
     const n=d.names.length;
-    const cell=Math.max(26,Math.min(56,o.w/n));
+    const cell=Math.max(30,Math.min(58,o.w/n));
     const fs=o.fsAxis;
-    const mL=Math.max(...d.names.map(x=>txtW(x,fs)))+12;
-    const mT=Math.max(...d.names.map(x=>txtW(x,fs)))*0.62+16+(o.title?o.fsTitle+8:0);
-    const W=mL+cell*n+80,H=mT+cell*n+26;
+    const mL=Math.max(...d.names.map(x=>txtW(x,fs,bold)))+14;
+    const mT=Math.max(...d.names.map(x=>txtW(x,fs,bold)))*0.72+16+(o.title?o.fsTitle+10:0);
+    const barW=Math.max(16,fs*1.25);
+    const W=mL+cell*n+barW+80,H=mT+cell*n+26;
     let body='<rect width="'+W+'" height="'+H+'" fill="#fff"/>';
-    const col=(v)=>{
-      if(!isFinite(v))return "#f0f2f5";
-      const t=Math.abs(v);
-      return v>=0?"rgba(31,111,208,"+(0.12+t*0.78)+")":"rgba(224,96,60,"+(0.12+t*0.78)+")";
-    };
     d.names.forEach((nm,i)=>{
-      body+=tspanText(mL-6,mT+cell*i+cell/2+fs*0.35,esc(nm),{anchor:"end",fs});
-      body+=tspanText(mL+cell*i+cell/2,mT-6,esc(nm),{anchor:"start",fs,rot:-45});
+      body+=tspanText(mL-7,mT+cell*i+cell/2+fs*0.35,esc(nm),{anchor:"end",fs,bold,fill:ink});
+      body+=tspanText(mL+cell*i+cell/2+fs*0.3,mT-7,esc(nm),{anchor:"start",fs,bold,rot:-90,fill:ink});
       d.names.forEach((__,j)=>{
         const v=d.matrix[i][j];
-        body+='<rect x="'+(mL+cell*j)+'" y="'+(mT+cell*i)+'" width="'+cell+'" height="'+cell+'" fill="'+col(v)+'" stroke="#fff"/>';
-        if(cell>=30)body+=tspanText(mL+cell*j+cell/2,mT+cell*i+cell/2+fs*0.32,isFinite(v)?(+v.toFixed(2)).toString():"—",
-          {anchor:"middle",fs:fs*0.82,fill:Math.abs(v)>0.6?"#fff":"#1d2430"});
+        const x=mL+cell*j,y=mT+cell*i;
+        if(!isFinite(v)){body+='<rect x="'+x+'" y="'+y+'" width="'+cell+'" height="'+cell+'" fill="#fff" stroke="'+ink+'" stroke-width="0.7"/>';return;}
+        body+='<rect x="'+x+'" y="'+y+'" width="'+cell+'" height="'+cell+'" fill="'+rampColor(BWR,1-(v+1)/2)+'" stroke="'+ink+'" stroke-width="0.7"/>';
+        body+=tspanText(x+cell/2,y+cell/2+fs*0.33,(v<0?"−":"")+Math.abs(v).toFixed(2),
+          {anchor:"middle",fs:fs*0.86,bold,fill:Math.abs(v)>0.62?"#fff":ink});
       });
     });
-    if(o.title)body+=tspanText(W/2,o.fsTitle+6,esc(o.title),{anchor:"middle",fs:o.fsTitle,bold:true});
-    return '<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" font-family="'+o.font+'">'+body+"</svg>";
+    body+='<rect x="'+mL+'" y="'+mT+'" width="'+(cell*n)+'" height="'+(cell*n)+'" fill="none" stroke="'+ink+'" stroke-width="'+o.axisWidth+'"/>';
+    const bx=mL+cell*n+24,bh=Math.min(Math.max(120,cell*n*0.8),cell*n),by=mT;
+    for(let i=0;i<60;i++)
+      body+='<rect x="'+bx+'" y="'+(by+bh*i/60)+'" width="'+barW+'" height="'+(bh/60+0.7)+'" fill="'+rampColor(BWR,i/60)+'"/>';
+    body+='<rect x="'+bx+'" y="'+by+'" width="'+barW+'" height="'+bh+'" fill="none" stroke="'+ink+'" stroke-width="1.6"/>';
+    [1,0.5,0,-0.5,-1].forEach(v=>{
+      const y=by+bh*(1-(v+1)/2);
+      body+='<line x1="'+(bx+barW)+'" y1="'+y+'" x2="'+(bx+barW+5)+'" y2="'+y+'" stroke="'+ink+'" stroke-width="1.6"/>'
+        +tspanText(bx+barW+8,y+fs*0.35,v.toFixed(1),{fs:fs*0.92,bold,fill:ink});
+    });
+    if(o.title)body+=tspanText(W/2,o.fsTitle+6,esc(o.title),{anchor:"middle",fs:o.fsTitle,bold,fill:ink});
+    return '<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" font-family="'+o.font+'" style="background:#fff">'+body+"</svg>";
   }};
 /* ---------- PCAスコア散布図 ---------- */
 GRAPHTYPES.mv_pca={name:"PCAスコア散布図",cat:"多変数",for:["multivar"],
@@ -6000,7 +6118,7 @@ GRAPHTYPES.mv_pca={name:"PCAスコア散布図",cat:"多変数",for:["multivar"]
     const sc=d.scores.map(r=>[r[0],r[1]]);
     const xs=autoRange(sc.map(p=>p[0]),o,"x"),ys=autoRange(sc.map(p=>p[1]),o,"y");
     ys.title=o.ylab||("PC2 ("+fmt(d.pca.explained[1],1)+"%)");
-    const P=startPlot(o,{type:"num",min:xs.min,max:xs.max,log:false,
+    const P=startPlot(o,{type:"num",min:xs.min,max:xs.max,log:false,ticks:xs.ticks,
       title:o.xlab||("PC1 ("+fmt(d.pca.explained[0],1)+"%)")},ys);
     let body='<line x1="'+P.px0+'" y1="'+P.Y(0)+'" x2="'+P.px1+'" y2="'+P.Y(0)+'" stroke="#c9d0da" stroke-dasharray="3 3"/>'
       +'<line x1="'+P.X(0)+'" y1="'+P.py0+'" x2="'+P.X(0)+'" y2="'+P.py1+'" stroke="#c9d0da" stroke-dasharray="3 3"/>';
@@ -6107,28 +6225,28 @@ function redrawGraph(){
 function graphTypesFor(tt){return Object.keys(GRAPHTYPES).filter(k=>GRAPHTYPES[k].for.includes(tt));}
 function typeThumb(k){
   const c={col_scatter:'<circle cx="14" cy="30" r="2.5"/><circle cx="17" cy="24" r="2.5"/><circle cx="12" cy="20" r="2.5"/><circle cx="38" cy="18" r="2.5"/><circle cx="42" cy="12" r="2.5"/><circle cx="35" cy="24" r="2.5"/><path d="M8 24h12M32 18h12" stroke="#1d2430" stroke-width="2" fill="none"/>',
-    col_bar:'<rect x="8" y="22" width="14" height="20" fill="#1f6fd0"/><rect x="30" y="12" width="14" height="30" fill="#e0603c"/><path d="M15 22v-7M15 15h0M38 12V6" stroke="#1d2430" stroke-width="1.5"/>',
-    col_box:'<rect x="8" y="18" width="14" height="14" fill="none" stroke="#1f6fd0" stroke-width="2"/><path d="M15 18v-8M15 32v8M8 25h14" stroke="#1f6fd0" stroke-width="2"/><rect x="30" y="14" width="14" height="12" fill="none" stroke="#e0603c" stroke-width="2"/><path d="M37 14V6M37 26v10M30 20h14" stroke="#e0603c" stroke-width="2"/>',
-    col_violin:'<path d="M15 8c8 6 8 12 0 18-8-6-8-12 0-18z" fill="#1f6fd0" opacity=".5"/><path d="M15 26c6 4 6 10 0 14-6-4-6-10 0-14z" fill="#1f6fd0" opacity=".5"/><path d="M37 10c9 8 9 18 0 28-9-10-9-20 0-28z" fill="#e0603c" opacity=".5"/>',
-    col_beforeafter:'<path d="M12 36L40 16M12 30L40 22M12 22L40 12" stroke="#9aa3b1" stroke-width="1.5" fill="none"/><circle cx="12" cy="36" r="3" fill="#1f6fd0"/><circle cx="12" cy="30" r="3" fill="#1f6fd0"/><circle cx="12" cy="22" r="3" fill="#1f6fd0"/><circle cx="40" cy="16" r="3" fill="#e0603c"/><circle cx="40" cy="22" r="3" fill="#e0603c"/><circle cx="40" cy="12" r="3" fill="#e0603c"/>',
-    col_float:'<rect x="8" y="14" width="14" height="24" fill="#1f6fd0" opacity=".35" stroke="#1f6fd0"/><rect x="30" y="8" width="14" height="20" fill="#e0603c" opacity=".35" stroke="#e0603c"/>',
-    col_hist:'<rect x="6" y="30" width="8" height="12" fill="#1f6fd0"/><rect x="15" y="20" width="8" height="22" fill="#1f6fd0"/><rect x="24" y="12" width="8" height="30" fill="#1f6fd0"/><rect x="33" y="22" width="8" height="20" fill="#1f6fd0"/><rect x="42" y="34" width="8" height="8" fill="#1f6fd0"/>',
-    xy_scatter:'<circle cx="10" cy="36" r="2.6" fill="#1f6fd0"/><circle cx="18" cy="30" r="2.6" fill="#1f6fd0"/><circle cx="26" cy="24" r="2.6" fill="#1f6fd0"/><circle cx="34" cy="16" r="2.6" fill="#1f6fd0"/><circle cx="44" cy="10" r="2.6" fill="#1f6fd0"/><path d="M8 38L46 8" stroke="#e0603c" stroke-width="1.8" fill="none"/>',
-    xy_line:'<path d="M8 38C18 36 22 14 46 10" stroke="#1f6fd0" stroke-width="2" fill="none"/><circle cx="8" cy="38" r="2.6" fill="#1f6fd0"/><circle cx="24" cy="24" r="2.6" fill="#1f6fd0"/><circle cx="46" cy="10" r="2.6" fill="#1f6fd0"/>',
-    xy_area:'<path d="M8 40L8 30C20 26 26 14 46 12L46 40Z" fill="#1f6fd0" opacity=".4" stroke="#1f6fd0" stroke-width="1.6"/>',
-    grp_bar:'<rect x="8" y="20" width="7" height="22" fill="#1f6fd0"/><rect x="16" y="26" width="7" height="16" fill="#e0603c"/><rect x="30" y="12" width="7" height="30" fill="#1f6fd0"/><rect x="38" y="22" width="7" height="20" fill="#e0603c"/>',
-    grp_stack:'<rect x="10" y="24" width="14" height="18" fill="#1f6fd0"/><rect x="10" y="12" width="14" height="12" fill="#e0603c"/><rect x="32" y="28" width="14" height="14" fill="#1f6fd0"/><rect x="32" y="10" width="14" height="18" fill="#e0603c"/>',
-    grp_scatter:'<circle cx="12" cy="28" r="2.4" fill="#1f6fd0"/><circle cx="12" cy="34" r="2.4" fill="#1f6fd0"/><circle cx="20" cy="20" r="2.4" fill="#e0603c"/><circle cx="20" cy="26" r="2.4" fill="#e0603c"/><circle cx="34" cy="24" r="2.4" fill="#1f6fd0"/><circle cx="42" cy="14" r="2.4" fill="#e0603c"/>',
-    grp_box:'<rect x="9" y="20" width="9" height="14" fill="none" stroke="#1f6fd0" stroke-width="2"/><rect x="21" y="16" width="9" height="14" fill="none" stroke="#e0603c" stroke-width="2"/><rect x="35" y="22" width="9" height="12" fill="none" stroke="#2fa36b" stroke-width="2"/>',
-    grp_line:'<path d="M8 34L22 26L36 18L48 12" stroke="#1f6fd0" stroke-width="2" fill="none"/><path d="M8 38L22 34L36 32L48 30" stroke="#e0603c" stroke-width="2" fill="none"/>',
+    col_bar:'<rect x="8" y="22" width="14" height="20" fill="#F0A22E"/><rect x="30" y="12" width="14" height="30" fill="#DE5C33"/><path d="M15 22v-7M15 15h0M38 12V6" stroke="#1d2430" stroke-width="1.5"/>',
+    col_box:'<rect x="8" y="18" width="14" height="14" fill="none" stroke="#F0A22E" stroke-width="2"/><path d="M15 18v-8M15 32v8M8 25h14" stroke="#F0A22E" stroke-width="2"/><rect x="30" y="14" width="14" height="12" fill="none" stroke="#DE5C33" stroke-width="2"/><path d="M37 14V6M37 26v10M30 20h14" stroke="#DE5C33" stroke-width="2"/>',
+    col_violin:'<path d="M15 8c8 6 8 12 0 18-8-6-8-12 0-18z" fill="#F0A22E" opacity=".5"/><path d="M15 26c6 4 6 10 0 14-6-4-6-10 0-14z" fill="#F0A22E" opacity=".5"/><path d="M37 10c9 8 9 18 0 28-9-10-9-20 0-28z" fill="#DE5C33" opacity=".5"/>',
+    col_beforeafter:'<path d="M12 36L40 16M12 30L40 22M12 22L40 12" stroke="#9aa3b1" stroke-width="1.5" fill="none"/><circle cx="12" cy="36" r="3" fill="#F0A22E"/><circle cx="12" cy="30" r="3" fill="#F0A22E"/><circle cx="12" cy="22" r="3" fill="#F0A22E"/><circle cx="40" cy="16" r="3" fill="#DE5C33"/><circle cx="40" cy="22" r="3" fill="#DE5C33"/><circle cx="40" cy="12" r="3" fill="#DE5C33"/>',
+    col_float:'<rect x="8" y="14" width="14" height="24" fill="#F0A22E" opacity=".35" stroke="#F0A22E"/><rect x="30" y="8" width="14" height="20" fill="#DE5C33" opacity=".35" stroke="#DE5C33"/>',
+    col_hist:'<rect x="6" y="30" width="8" height="12" fill="#F0A22E"/><rect x="15" y="20" width="8" height="22" fill="#F0A22E"/><rect x="24" y="12" width="8" height="30" fill="#F0A22E"/><rect x="33" y="22" width="8" height="20" fill="#F0A22E"/><rect x="42" y="34" width="8" height="8" fill="#F0A22E"/>',
+    xy_scatter:'<circle cx="10" cy="36" r="2.6" fill="#F0A22E"/><circle cx="18" cy="30" r="2.6" fill="#F0A22E"/><circle cx="26" cy="24" r="2.6" fill="#F0A22E"/><circle cx="34" cy="16" r="2.6" fill="#F0A22E"/><circle cx="44" cy="10" r="2.6" fill="#F0A22E"/><path d="M8 38L46 8" stroke="#DE5C33" stroke-width="1.8" fill="none"/>',
+    xy_line:'<path d="M8 38C18 36 22 14 46 10" stroke="#F0A22E" stroke-width="2" fill="none"/><circle cx="8" cy="38" r="2.6" fill="#F0A22E"/><circle cx="24" cy="24" r="2.6" fill="#F0A22E"/><circle cx="46" cy="10" r="2.6" fill="#F0A22E"/>',
+    xy_area:'<path d="M8 40L8 30C20 26 26 14 46 12L46 40Z" fill="#F0A22E" opacity=".4" stroke="#F0A22E" stroke-width="1.6"/>',
+    grp_bar:'<rect x="8" y="20" width="7" height="22" fill="#F0A22E"/><rect x="16" y="26" width="7" height="16" fill="#DE5C33"/><rect x="30" y="12" width="7" height="30" fill="#F0A22E"/><rect x="38" y="22" width="7" height="20" fill="#DE5C33"/>',
+    grp_stack:'<rect x="10" y="24" width="14" height="18" fill="#F0A22E"/><rect x="10" y="12" width="14" height="12" fill="#DE5C33"/><rect x="32" y="28" width="14" height="14" fill="#F0A22E"/><rect x="32" y="10" width="14" height="18" fill="#DE5C33"/>',
+    grp_scatter:'<circle cx="12" cy="28" r="2.4" fill="#F0A22E"/><circle cx="12" cy="34" r="2.4" fill="#F0A22E"/><circle cx="20" cy="20" r="2.4" fill="#DE5C33"/><circle cx="20" cy="26" r="2.4" fill="#DE5C33"/><circle cx="34" cy="24" r="2.4" fill="#F0A22E"/><circle cx="42" cy="14" r="2.4" fill="#DE5C33"/>',
+    grp_box:'<rect x="9" y="20" width="9" height="14" fill="none" stroke="#F0A22E" stroke-width="2"/><rect x="21" y="16" width="9" height="14" fill="none" stroke="#DE5C33" stroke-width="2"/><rect x="35" y="22" width="9" height="12" fill="none" stroke="#7C1D1D" stroke-width="2"/>',
+    grp_line:'<path d="M8 34L22 26L36 18L48 12" stroke="#F0A22E" stroke-width="2" fill="none"/><path d="M8 38L22 34L36 32L48 30" stroke="#DE5C33" stroke-width="2" fill="none"/>',
     grp_heat:'<rect x="8" y="10" width="12" height="10" fill="#c6dbef"/><rect x="20" y="10" width="12" height="10" fill="#4292c6"/><rect x="32" y="10" width="12" height="10" fill="#08306b"/><rect x="8" y="20" width="12" height="10" fill="#08306b"/><rect x="20" y="20" width="12" height="10" fill="#6baed6"/><rect x="32" y="20" width="12" height="10" fill="#c6dbef"/><rect x="8" y="30" width="12" height="10" fill="#4292c6"/><rect x="20" y="30" width="12" height="10" fill="#deebf7"/><rect x="32" y="30" width="12" height="10" fill="#2171b5"/>',
-    surv_km:'<path d="M8 10h8v6h8v10h8v10h14" stroke="#1f6fd0" stroke-width="2" fill="none"/><path d="M8 12h6v10h10v14h6v6h14" stroke="#e0603c" stroke-width="2" fill="none"/>',
-    pie:'<path d="M28 24L28 6A18 18 0 0 1 44 30Z" fill="#1f6fd0"/><path d="M28 24L44 30A18 18 0 0 1 12 34Z" fill="#e0603c"/><path d="M28 24L12 34A18 18 0 0 1 28 6Z" fill="#2fa36b"/>',
-    donut:'<path d="M28 24L28 6A18 18 0 0 1 44 30Z" fill="#1f6fd0"/><path d="M28 24L44 30A18 18 0 0 1 12 34Z" fill="#e0603c"/><path d="M28 24L12 34A18 18 0 0 1 28 6Z" fill="#2fa36b"/><circle cx="28" cy="24" r="8" fill="#fff"/>',
-    mv_corrheat:'<rect x="10" y="10" width="10" height="10" fill="#1f6fd0"/><rect x="20" y="10" width="10" height="10" fill="#9ec5f0"/><rect x="30" y="10" width="10" height="10" fill="#f3b7a6"/><rect x="10" y="20" width="10" height="10" fill="#9ec5f0"/><rect x="20" y="20" width="10" height="10" fill="#1f6fd0"/><rect x="30" y="20" width="10" height="10" fill="#cfe0f5"/><rect x="10" y="30" width="10" height="10" fill="#f3b7a6"/><rect x="20" y="30" width="10" height="10" fill="#cfe0f5"/><rect x="30" y="30" width="10" height="10" fill="#1f6fd0"/>',
-    mv_pca:'<circle cx="18" cy="30" r="2.4" fill="#1f6fd0"/><circle cx="24" cy="26" r="2.4" fill="#1f6fd0"/><circle cx="30" cy="32" r="2.4" fill="#1f6fd0"/><circle cx="36" cy="18" r="2.4" fill="#1f6fd0"/><path d="M28 26L44 12M28 26L16 14" stroke="#e0603c" stroke-width="1.6"/>',
-    mv_forest:'<path d="M28 6v34" stroke="#9aa3b1" stroke-dasharray="3 3"/><path d="M14 14h20M20 24h22M10 34h26" stroke="#1f6fd0" stroke-width="1.6"/><rect x="22" y="11" width="6" height="6" fill="#e0603c"/><rect x="29" y="21" width="6" height="6" fill="#1f6fd0"/><rect x="20" y="31" width="6" height="6" fill="#1f6fd0"/>',
-    roc:'<path d="M8 40L8 16C16 10 28 8 46 8" stroke="#1f6fd0" stroke-width="2" fill="none"/><path d="M8 40L46 8" stroke="#c9d0da" stroke-dasharray="3 3"/>'
+    surv_km:'<path d="M8 10h8v6h8v10h8v10h14" stroke="#F0A22E" stroke-width="2" fill="none"/><path d="M8 12h6v10h10v14h6v6h14" stroke="#DE5C33" stroke-width="2" fill="none"/>',
+    pie:'<path d="M28 24L28 6A18 18 0 0 1 44 30Z" fill="#F0A22E"/><path d="M28 24L44 30A18 18 0 0 1 12 34Z" fill="#DE5C33"/><path d="M28 24L12 34A18 18 0 0 1 28 6Z" fill="#7C1D1D"/>',
+    donut:'<path d="M28 24L28 6A18 18 0 0 1 44 30Z" fill="#F0A22E"/><path d="M28 24L44 30A18 18 0 0 1 12 34Z" fill="#DE5C33"/><path d="M28 24L12 34A18 18 0 0 1 28 6Z" fill="#7C1D1D"/><circle cx="28" cy="24" r="8" fill="#fff"/>',
+    mv_corrheat:'<rect x="10" y="10" width="10" height="10" fill="#F0A22E"/><rect x="20" y="10" width="10" height="10" fill="#9ec5f0"/><rect x="30" y="10" width="10" height="10" fill="#f3b7a6"/><rect x="10" y="20" width="10" height="10" fill="#9ec5f0"/><rect x="20" y="20" width="10" height="10" fill="#F0A22E"/><rect x="30" y="20" width="10" height="10" fill="#cfe0f5"/><rect x="10" y="30" width="10" height="10" fill="#f3b7a6"/><rect x="20" y="30" width="10" height="10" fill="#cfe0f5"/><rect x="30" y="30" width="10" height="10" fill="#F0A22E"/>',
+    mv_pca:'<circle cx="18" cy="30" r="2.4" fill="#F0A22E"/><circle cx="24" cy="26" r="2.4" fill="#F0A22E"/><circle cx="30" cy="32" r="2.4" fill="#F0A22E"/><circle cx="36" cy="18" r="2.4" fill="#F0A22E"/><path d="M28 26L44 12M28 26L16 14" stroke="#DE5C33" stroke-width="1.6"/>',
+    mv_forest:'<path d="M28 6v34" stroke="#9aa3b1" stroke-dasharray="3 3"/><path d="M14 14h20M20 24h22M10 34h26" stroke="#F0A22E" stroke-width="1.6"/><rect x="22" y="11" width="6" height="6" fill="#DE5C33"/><rect x="29" y="21" width="6" height="6" fill="#F0A22E"/><rect x="20" y="31" width="6" height="6" fill="#F0A22E"/>',
+    roc:'<path d="M8 40L8 16C16 10 28 8 46 8" stroke="#F0A22E" stroke-width="2" fill="none"/><path d="M8 40L46 8" stroke="#c9d0da" stroke-dasharray="3 3"/>'
   }[k]||'<rect x="10" y="12" width="34" height="28" fill="none" stroke="#9aa3b1" stroke-width="2"/>';
   return '<svg width="56" height="48" viewBox="0 0 56 48">'+c+"</svg>";
 }
@@ -6192,6 +6310,8 @@ function renderInspector(g){
      ['"Times New Roman", serif',"Times New Roman"],['"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif',"游ゴシック/ヒラギノ"],
      ['"Hiragino Mincho ProN","Yu Mincho",serif',"游明朝/ヒラギノ明朝"],["Georgia, serif","Georgia"]])
    +optNum(o,"fs","本文サイズ",6,36,1)+optNum(o,"fsAxis","目盛サイズ",6,36,1)+optNum(o,"fsTitle","題字サイズ",6,40,1)
+   +optChk(o,"bold","文字を太字にする（Prism風）")
+   +insRow("文字・軸の色",'<input type="color" data-opt="ink" value="'+(o.ink||"#000000")+'">')
    +'</div></details>';
   if(!isPie){
     h+='<details class="acc" open><summary>軸</summary><div class="body">'
@@ -6205,7 +6325,8 @@ function renderInspector(g){
      +optSel(o,"frame","枠線",[["L","L字（左と下）"],["full","四方を囲む"],["none","なし"]])
      +optChk(o,"gridY","横のグリッド線")+optChk(o,"gridX","縦のグリッド線")
      +optChk(o,"tickOut","目盛を外向きにする")
-     +optNum(o,"tickLen","目盛の長さ",0,20,1)
+     +'<div class="grid2">'+optNum(o,"tickLen","目盛の長さ",0,20,1)+optNum(o,"tickWidth","目盛の太さ",0.4,6,0.2)+"</div>"
+     +optNum(o,"axisWidth","軸線の太さ",0.5,8,0.2)
      +"</div></details>";
   }
   h+='<details class="acc" open><summary>データの表示</summary><div class="body">';
@@ -6220,6 +6341,10 @@ function renderInspector(g){
      +optNum(o,"pointSize","点の大きさ",1,24,0.5)
      +'<div class="grid2">'+optNum(o,"barWidth","棒/箱の幅",0.1,1,0.02)+optNum(o,"barStroke","枠線の太さ",0,6,0.1)+"</div>"
      +optChk(o,"barFill","塗りつぶす")
+     +optSel(o,"barOutline","棒・箱の枠線",[["black","黒（Prism風）"],["color","データの色"],["none","なし"]])
+     +optChk(o,"pointStroke","データ点に黒い縁をつける")
+     +optSel(o,"valueLabels","値のラベル",[["none","表示しない"],["value","平均値を表示"],["n","n数を表示"]])
+     +optSel(o,"meanLineStyle","中心線の線種",[["solid","実線"],["dash","破線"]])
      +optSel(o,"sortBars","並び順",[["none","表の順番どおり"],["asc","値の小さい順"],["desc","値の大きい順"]])
      +optNum(o,"barOpacity","塗りの濃さ",0.1,1,0.05)
      +optNum(o,"lineWidth","線の太さ",0.4,8,0.1)
@@ -6227,8 +6352,13 @@ function renderInspector(g){
   }
   if(g.gtype==="col_box"||g.gtype==="grp_box")
     h+=optSel(o,"boxWhisker","ひげの定義",[["tukey","Tukey（1.5×IQR）"],["minmax","最小〜最大"],["p1090","10〜90パーセンタイル"]]);
-  if(g.gtype==="col_violin")h+=optNum(o,"violinWidth","バイオリンの幅",0.2,1.2,0.05);
+  if(g.gtype==="col_violin")h+=optNum(o,"violinWidth","バイオリンの幅",0.2,1.2,0.05)
+    +optChk(o,"violinQuartiles","中央値・四分位を破線で描く");
   if(g.gtype==="grp_stack")h+=optChk(o,"stackPct","100%積み上げにする");
+  if(g.gtype==="grp_bar")h+=optSel(o,"barLayout","棒の並べ方",[["interleaved","集合（行ごとにまとめる）"],["separated","分離（データセットごとに並べる）"]]);
+  if(g.gtype==="grp_heat"||g.gtype==="mv_corrheat")h+=optSel(o,"heatColors","配色",
+    [["viridis","Viridis（Prism標準）"],["bwr","青-白-赤"],["blues","ブルー"],["warm","暖色"],["gray","グレースケール"]])
+    +optSel(o,"valueLabels","セルに数値を書く",[["none","書かない"],["value","書く"]]);
   if(isPie)h+=optSel(o,"pieLabels","ラベル",[["pct","割合(%)"],["value","実数"],["name","項目名"],["none","なし"]])
     +(g.gtype==="donut"?optNum(o,"donut","中央の穴の割合",0.1,0.9,0.05):"");
   if(isKM)h+=optChk(o,"censorTicks","打ち切りを縦線で示す")+optChk(o,"showBand","95%信頼帯を表示")
@@ -6249,7 +6379,7 @@ function renderInspector(g){
        +'<select data-gsym="'+i+'" style="width:88px">'+SYMBOLS.map(s=>'<option value="'+s+'"'+(gr.symbol===s?" selected":"")+">"+symbolName(s).split(" ")[0]+"</option>").join("")+"</select></div>";
     });
     h+=insRow("配色テーマ",'<select data-pal="1" style="max-width:190px">'
-      +[["prism","PrismLab 標準"],["cud","色覚バリアフリー"],["nature","Nature風"],["gray","グレースケール"],["warm","暖色系"],["cool","寒色系"]]
+      +[["prism","Prism標準（橙〜青）"],["vivid","ビビッド"],["cud","色覚バリアフリー"],["nature","Nature風"],["gray","グレースケール"],["warm","暖色系"],["cool","寒色系"]]
         .map(x=>'<option value="'+x[0]+'"'+(o.palette===x[0]?" selected":"")+">"+x[1]+"</option>").join("")+"</select>")
      +'<button class="tbtn" data-applypal="1" style="margin-top:6px">配色をデータセットに適用</button>'
      +"</div></details>";
@@ -6261,7 +6391,7 @@ function renderInspector(g){
   if(!isPie){
     h+='<details class="acc"><summary>有意差の表示</summary><div class="body">'
      +optChk(o,"autoBracket","解析結果から自動でブラケットを描く")
-     +optSel(o,"bracketStyle","表示形式",[["star","* / ** / ns"],["starOnly","有意なものだけ *"],["p","P値を書く"]])
+     +optSel(o,"bracketStyle","表示形式",[["star","* / ** / ns"],["starOnly","有意なものだけ *"],["p","P = 0.0032 の形式"],["num","数値のみ（Prism風）"]])
      +'<p class="mini">解析（t検定・ANOVAなど）を実行すると、その結果が自動で反映されます。</p>'
      +'<button class="tbtn" data-act="addbracket">＋ 手動でブラケットを追加</button>';
     if(o.brackets&&o.brackets.length){
@@ -6918,7 +7048,7 @@ function prismTableToSheet(t,index){
   const tVals=rowTitles?(childrenByTag(rowTitles,"Subcolumn")[0]?subcolValues(childrenByTag(rowTitles,"Subcolumn")[0]):[]):[];
   if(xCol)sh.xTitle=directTitle(xCol)||sh.xTitle;
   yCols.forEach((c,i)=>sh.groups.push({name:directTitle(c)||("列"+(i+1)),
-    color:GCOLORS[i%GCOLORS.length],symbol:SYMBOLS[i%SYMBOLS.length]}));
+    color:GCOLORS[i%GCOLORS.length],symbol:"circle"}));
   if(!sh.groups.length)sh.groups.push({name:"値",color:GCOLORS[0],symbol:SYMBOLS[0]});
   let nRows=Math.max(xVals.length,tVals.length,
     ...colData.map(c=>Math.max(0,...c.map(s=>s.length))));

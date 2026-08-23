@@ -234,7 +234,7 @@ function applyGrid(grid,opts,name){
   const nG=Math.max(1,width-start);
   for(let g=0;g<nG;g++){
     const nm=header&&header[start+g]!==undefined&&String(header[start+g]).trim()!==""?String(header[start+g]):defaultGroupName(sh.ttype,g);
-    sh.groups.push({name:nm,color:GCOLORS[g%GCOLORS.length],symbol:SYMBOLS[g%SYMBOLS.length]});
+    sh.groups.push({name:nm,color:GCOLORS[g%GCOLORS.length],symbol:"circle"});
   }
   body.forEach(r=>{
     const row=newRow(nG,1);
