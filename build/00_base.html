@@ -1,0 +1,2047 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PrismLab — 論文グラフ＆統計スタジオ</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%227%22 fill=%22%231f6fd0%22/><rect x=%226%22 y=%2217%22 width=%225%22 height=%229%22 fill=%22white%22/><rect x=%2213.5%22 y=%228%22 width=%225%22 height=%2218%22 fill=%22white%22/><rect x=%2221%22 y=%2213%22 width=%225%22 height=%2213%22 fill=%22white%22/></svg>">
+<style>
+/* =====================================================================
+   PrismLab : GraphPad Prism 風の統計解析＋作図スタジオ（単一HTML・依存ゼロ）
+   ===================================================================== */
+:root{
+  --bg:#eef1f5; --panel:#ffffff; --ink:#1d2430; --ink2:#5a6474; --line:#d7dde6;
+  --accent:#1f6fd0; --accent-soft:#e8f1fd;
+  --c-data:#e8a51b; --c-info:#3aa0d8; --c-result:#2fa36b; --c-graph:#e0603c; --c-layout:#8258c8;
+  --ok:#2fa36b; --warn:#d8891b; --bad:#d84a3f;
+  --radius:7px;
+  --font:"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --mono:"SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;}
+html,body{height:100%;margin:0;}
+body{font-family:var(--font);background:var(--bg);color:var(--ink);font-size:13px;font-weight:500;overflow:hidden;}
+button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit;}
+:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
+
+/* ---------- レイアウト ---------- */
+#app{display:flex;flex-direction:column;height:100vh;}
+header#topbar{background:linear-gradient(#fbfcfe,#eef1f6);border-bottom:1px solid var(--line);flex:0 0 auto;}
+.brandrow{display:flex;align-items:center;gap:12px;padding:6px 12px 0;}
+.brand{font-weight:800;font-size:15px;letter-spacing:.02em;display:flex;align-items:center;gap:7px;}
+.brand .logo{width:20px;height:20px;border-radius:5px;background:conic-gradient(from 200deg,#e0603c,#e8a51b,#2fa36b,#1f6fd0,#8258c8,#e0603c);}
+.brand small{font-weight:600;color:var(--ink2);font-size:11px;}
+.brandrow .spacer{flex:1;}
+#projName{border:1px solid transparent;background:transparent;font-weight:700;padding:3px 6px;border-radius:5px;width:220px;}
+#projName:hover,#projName:focus{border-color:var(--line);background:#fff;}
+.toolbar{display:flex;gap:4px;padding:5px 10px 7px;flex-wrap:wrap;align-items:center;}
+.tb{display:flex;gap:3px;align-items:center;padding:0 7px;border-right:1px solid var(--line);}
+.tb:last-child{border-right:none;}
+.tb b{font-size:10px;color:var(--ink2);font-weight:700;letter-spacing:.05em;margin-right:3px;}
+button.tbtn{border:1px solid var(--line);background:#fff;border-radius:6px;padding:5px 10px;font-weight:700;cursor:pointer;white-space:nowrap;transition:.12s;}
+button.tbtn:hover{background:var(--accent-soft);border-color:#9dc3ee;}
+button.tbtn:active{transform:translateY(1px);}
+button.tbtn.primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+button.tbtn.primary:hover{background:#1a5fb4;}
+button.tbtn.ghost{border-color:transparent;background:transparent;}
+button.tbtn.ghost:hover{background:#e3e8ef;}
+button.tbtn:disabled{opacity:.4;cursor:not-allowed;}
+.tbtn .ic{font-size:13px;margin-right:3px;}
+
+#body{flex:1;display:flex;min-height:0;}
+#nav{width:246px;flex:0 0 auto;background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;padding-bottom:24px;}
+#main{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--bg);}
+#inspector{width:330px;flex:0 0 auto;background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;display:none;}
+#inspector.on{display:block;}
+
+/* ---------- ナビゲータ ---------- */
+.navsec{margin:8px 6px 2px;}
+.navsec>h4{display:flex;align-items:center;gap:6px;margin:0;padding:5px 6px;font-size:11px;font-weight:800;color:var(--ink2);letter-spacing:.06em;cursor:pointer;user-select:none;}
+.navsec>h4 .dot{width:9px;height:9px;border-radius:3px;flex:0 0 auto;}
+.navsec>h4 .cnt{margin-left:auto;font-weight:700;color:#9aa3b1;font-size:10px;}
+.navitem{display:flex;align-items:center;gap:6px;padding:5px 8px 5px 20px;border-radius:6px;cursor:pointer;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.navitem:hover{background:#f0f3f8;}
+.navitem.sel{background:var(--accent-soft);color:#14508f;font-weight:800;}
+.navitem .badge{font-size:9px;font-weight:800;padding:1px 5px;border-radius:20px;background:#eef1f5;color:var(--ink2);margin-left:auto;}
+.navitem .kill{opacity:0;font-weight:800;color:#b4bcc8;padding:0 3px;}
+.navitem:hover .kill{opacity:1;}
+.navitem .kill:hover{color:var(--bad);}
+.navadd{margin:2px 6px 6px 20px;font-size:11px;color:var(--accent);cursor:pointer;font-weight:700;}
+.navadd:hover{text-decoration:underline;}
+
+/* ---------- シート ---------- */
+#sheetbar{display:flex;align-items:center;gap:8px;padding:6px 12px;background:#f8fafc;border-bottom:1px solid var(--line);}
+#sheetbar .stitle{font-weight:800;font-size:14px;}
+#sheetbar .stag{font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px;color:#fff;}
+#sheetbar .spacer{flex:1;}
+#sheetview{flex:1;overflow:auto;padding:14px;}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;box-shadow:0 1px 2px rgba(20,30,50,.04);}
+.card>h3{margin:0 0 10px;font-size:13px;font-weight:800;display:flex;align-items:center;gap:8px;}
+.card>h3 .sub{font-weight:600;color:var(--ink2);font-size:11px;}
+
+/* ---------- データ表 ---------- */
+.tablewrap{overflow:auto;max-height:calc(100vh - 190px);border:1px solid var(--line);border-radius:var(--radius);background:#fff;}
+table.grid{border-collapse:separate;border-spacing:0;font-size:12px;}
+table.grid th,table.grid td{border-right:1px solid #e6eaf0;border-bottom:1px solid #e6eaf0;padding:0;}
+table.grid thead th{position:sticky;top:0;z-index:3;background:#f3f6fa;font-weight:800;color:var(--ink2);text-align:center;padding:4px 6px;font-size:11px;}
+table.grid thead tr.grp th{background:#eaf0f7;top:0;z-index:4;}
+table.grid thead tr.sub th{top:26px;z-index:3;}
+table.grid td.rowhdr,table.grid th.rowhdr{position:sticky;left:0;z-index:2;background:#f7f9fc;font-weight:700;color:var(--ink2);text-align:center;min-width:34px;}
+table.grid thead th.corner{left:0;z-index:5;background:#eaf0f7;}
+table.grid td input,table.grid th input{border:0;background:transparent;width:100%;padding:3px 6px;text-align:right;font-variant-numeric:tabular-nums;font-weight:600;}
+table.grid th input{text-align:center;font-weight:800;color:var(--ink);}
+table.grid td input:focus{background:#fffbe8;box-shadow:inset 0 0 0 2px var(--accent);}
+table.grid td.xcol input,table.grid td.titlecol input{text-align:left;background:#fcfdff;}
+table.grid td.sel input{background:var(--accent-soft);}
+table.grid col.gcol{min-width:74px;}
+.grpname{display:flex;align-items:center;gap:4px;justify-content:center;}
+.grpname .swatch{width:11px;height:11px;border-radius:3px;border:1px solid rgba(0,0,0,.15);cursor:pointer;flex:0 0 auto;}
+.tblfoot{display:flex;gap:8px;align-items:center;padding:8px 2px;flex-wrap:wrap;}
+.hint{font-size:11px;color:var(--ink2);font-weight:600;}
+
+/* ---------- 結果 ---------- */
+table.res{border-collapse:collapse;font-size:12px;width:auto;min-width:60%;margin-bottom:6px;}
+table.res th,table.res td{border:1px solid #e2e7ee;padding:4px 10px;text-align:right;font-variant-numeric:tabular-nums;}
+table.res th{background:#f3f6fa;font-weight:800;color:var(--ink2);text-align:center;}
+table.res td:first-child,table.res th:first-child{text-align:left;font-weight:700;}
+table.res tr.sec td{background:#f7f9fc;font-weight:800;color:var(--ink2);}
+table.res tbody tr:hover td{background:#fbfcfe;}
+.sigstar{font-weight:800;color:var(--bad);}
+.pill{display:inline-block;font-size:11px;font-weight:800;padding:2px 8px;border-radius:20px;background:#eef1f5;color:var(--ink2);}
+.pill.sig{background:#fdeceb;color:#b4362c;}
+.pill.ns{background:#eef3ea;color:#4c7a52;}
+.verdict{background:#f6f9fd;border-left:4px solid var(--accent);border-radius:0 6px 6px 0;padding:9px 12px;margin:8px 0;font-weight:600;line-height:1.65;}
+.warnbox{background:#fff8ec;border-left:4px solid var(--warn);border-radius:0 6px 6px 0;padding:8px 12px;margin:8px 0;font-weight:600;}
+.errbox{background:#fdeceb;border-left:4px solid var(--bad);border-radius:0 6px 6px 0;padding:8px 12px;margin:8px 0;font-weight:700;}
+
+/* ---------- フォーム ---------- */
+.frow{display:flex;align-items:center;gap:8px;margin:7px 0;flex-wrap:wrap;}
+.frow>label{font-weight:700;min-width:96px;font-size:12px;}
+select,input[type=text],input[type=number]{border:1px solid var(--line);border-radius:5px;padding:4px 7px;background:#fff;font-weight:600;}
+select:hover,input[type=text]:hover,input[type=number]:hover{border-color:#b6c1d0;}
+input[type=color]{border:1px solid var(--line);border-radius:5px;width:32px;height:24px;padding:1px;background:#fff;cursor:pointer;}
+input[type=range]{accent-color:var(--accent);}
+input[type=checkbox],input[type=radio]{accent-color:var(--accent);width:14px;height:14px;}
+label.chk{display:inline-flex;align-items:center;gap:5px;font-weight:600;cursor:pointer;}
+fieldset{border:1px solid var(--line);border-radius:6px;padding:8px 10px;margin:8px 0;}
+legend{font-weight:800;font-size:11px;color:var(--ink2);padding:0 5px;}
+
+/* ---------- インスペクタ ---------- */
+.insp-h{position:sticky;top:0;background:#f8fafc;border-bottom:1px solid var(--line);padding:8px 12px;font-weight:800;z-index:2;display:flex;align-items:center;gap:8px;}
+.acc{border-bottom:1px solid var(--line);}
+.acc>summary{padding:8px 12px;font-weight:800;cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;font-size:12px;background:#fcfdff;}
+.acc>summary::-webkit-details-marker{display:none;}
+.acc>summary:before{content:"▸";color:var(--ink2);font-size:10px;transition:.15s;}
+.acc[open]>summary:before{transform:rotate(90deg);}
+.acc>summary:hover{background:#f2f6fb;}
+.acc .body{padding:6px 12px 12px;}
+.mini{font-size:11px;color:var(--ink2);font-weight:600;line-height:1.5;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;}
+.seg button{border:0;background:#fff;padding:4px 9px;font-weight:700;cursor:pointer;border-right:1px solid var(--line);}
+.seg button:last-child{border-right:0;}
+.seg button.on{background:var(--accent);color:#fff;}
+.swatches{display:flex;gap:4px;flex-wrap:wrap;}
+.swatches .sw{width:20px;height:20px;border-radius:5px;border:1px solid rgba(0,0,0,.15);cursor:pointer;}
+.swatches .sw.on{box-shadow:0 0 0 2px var(--accent);}
+
+/* ---------- グラフ ---------- */
+#graphstage{display:flex;justify-content:center;padding:18px;}
+.graphpaper{background:#fff;border:1px solid var(--line);border-radius:4px;box-shadow:0 3px 14px rgba(20,30,50,.09);padding:10px;}
+.graphpaper svg{display:block;}
+
+/* ---------- モーダル ---------- */
+.modal-bg{position:fixed;inset:0;background:rgba(24,32,45,.42);display:flex;align-items:center;justify-content:center;z-index:100;padding:24px;}
+.modal{background:#fff;border-radius:10px;box-shadow:0 18px 50px rgba(15,25,40,.3);max-width:940px;width:100%;max-height:88vh;display:flex;flex-direction:column;}
+.modal>h3{margin:0;padding:13px 18px;border-bottom:1px solid var(--line);font-size:14px;font-weight:800;display:flex;align-items:center;gap:8px;}
+.modal>h3 .spacer{flex:1;}
+.modal .mbody{padding:14px 18px;overflow:auto;}
+.modal .mfoot{padding:11px 18px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end;background:#fafbfd;border-radius:0 0 10px 10px;}
+.picker{display:grid;grid-template-columns:190px 1fr;gap:14px;min-height:340px;}
+.picker .cats{border-right:1px solid var(--line);padding-right:10px;}
+.picker .cats div{padding:7px 10px;border-radius:6px;cursor:pointer;font-weight:700;}
+.picker .cats div:hover{background:#f0f3f8;}
+.picker .cats div.on{background:var(--accent-soft);color:#14508f;font-weight:800;}
+.picker .items{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;align-content:start;}
+.tile{border:1px solid var(--line);border-radius:8px;padding:9px;cursor:pointer;text-align:center;transition:.12s;background:#fff;}
+.tile:hover{border-color:var(--accent);box-shadow:0 2px 10px rgba(31,111,208,.14);}
+.tile.on{border-color:var(--accent);background:var(--accent-soft);}
+.tile .tn{font-weight:800;font-size:11.5px;margin-top:5px;}
+.tile .td{font-size:10px;color:var(--ink2);font-weight:600;margin-top:2px;line-height:1.35;}
+.tile svg{display:block;margin:0 auto;}
+
+/* ---------- トースト ---------- */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(70px);background:#232c3a;color:#fff;padding:9px 18px;border-radius:22px;font-weight:700;opacity:0;transition:.25s;z-index:200;box-shadow:0 6px 20px rgba(0,0,0,.25);}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+#toast.err{background:#a8342a;}
+.empty{text-align:center;color:var(--ink2);padding:70px 20px;font-weight:600;line-height:1.9;}
+.empty h2{font-size:17px;color:var(--ink);margin:0 0 6px;}
+kbd{background:#eef1f5;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:1px 5px;font-size:11px;font-weight:700;font-family:var(--mono);}
+@media print{
+  #topbar,#nav,#inspector,#sheetbar{display:none!important;}
+  #sheetview{overflow:visible;padding:0;}
+  .graphpaper{border:0;box-shadow:none;}
+  body{overflow:visible;}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="topbar">
+    <div class="brandrow">
+      <div class="brand"><span class="logo"></span>PrismLab <small>論文グラフ＆統計スタジオ</small></div>
+      <input id="projName" value="無題のプロジェクト" title="プロジェクト名">
+      <span class="spacer"></span>
+      <span class="hint" id="savestate"></span>
+    </div>
+    <div class="toolbar" id="toolbar"></div>
+  </header>
+  <div id="body">
+    <aside id="nav"></aside>
+    <section id="main">
+      <div id="sheetbar"></div>
+      <div id="sheetview"></div>
+    </section>
+    <aside id="inspector"></aside>
+  </div>
+</div>
+<div id="toast"></div>
+<div id="modalRoot"></div>
+<script>
+/* =====================================================================
+   数学・統計コア（stat-atelier で scipy/R と照合済みの実装を継承）
+   ===================================================================== */
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function fmt(x,d){ // 有効数字を意識した数値整形
+  if(x===null||x===undefined||!isFinite(x))return "—";
+  if(d!==undefined)return (+x).toFixed(d);
+  const a=Math.abs(x);
+  if(a===0)return "0";
+  if(a>=10000)return (+x).toLocaleString("ja-JP",{maximumFractionDigits:0});
+  if(a>=100)return (+x).toFixed(1);
+  if(a>=1)return (+x).toFixed(2);
+  if(a>=0.001)return (+x).toFixed(3);
+  return (+x).toExponential(2);
+}
+function pFmt(p){
+  if(p===null||p===undefined||!isFinite(p))return "—";
+  if(p<0.001)return "&lt; 0.001";
+  if(p<0.01)return p.toFixed(4);
+  return p.toFixed(3);
+}
+function pEq(p){return p<0.001?pFmt(p):"= "+pFmt(p);} // 「p = < 0.001」の二重表記を防ぐ
+function pBadge(p,label){
+  const sig=p<0.05;
+  return `<span class="p-badge ${sig?'sig':'ns'}">${label||'p'} ${pEq(p)}${sig?' ★':''}</span>`;
+}
+function mulberry32(seed){let a=seed>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+
+/* ---------------- 数学コア：特殊関数 ---------------- */
+const LANCZOS=[676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
+function lgamma(z){
+  if(z<0.5)return Math.log(Math.PI/Math.sin(Math.PI*z))-lgamma(1-z);
+  z-=1;let x=0.99999999999980993;
+  for(let i=0;i<8;i++)x+=LANCZOS[i]/(z+i+1);
+  const t=z+7.5;
+  return 0.5*Math.log(2*Math.PI)+(z+0.5)*Math.log(t)-t+Math.log(x);
+}
+function betacf(a,b,x){
+  const FPMIN=1e-300;let qab=a+b,qap=a+1,qam=a-1,c=1,d=1-qab*x/qap;
+  if(Math.abs(d)<FPMIN)d=FPMIN;d=1/d;let h=d;
+  for(let m=1;m<=300;m++){
+    const m2=2*m;
+    let aa=m*(b-m)*x/((qam+m2)*(a+m2));
+    d=1+aa*d;if(Math.abs(d)<FPMIN)d=FPMIN;
+    c=1+aa/c;if(Math.abs(c)<FPMIN)c=FPMIN;
+    d=1/d;h*=d*c;
+    aa=-(a+m)*(qab+m)*x/((a+m2)*(qap+m2));
+    d=1+aa*d;if(Math.abs(d)<FPMIN)d=FPMIN;
+    c=1+aa/c;if(Math.abs(c)<FPMIN)c=FPMIN;
+    d=1/d;const del=d*c;h*=del;
+    if(Math.abs(del-1)<3e-13)break;
+  }
+  return h;
+}
+function ibeta(a,b,x){ // 正則化不完全ベータ関数 I_x(a,b)
+  if(x<=0)return 0;if(x>=1)return 1;
+  const bt=Math.exp(lgamma(a+b)-lgamma(a)-lgamma(b)+a*Math.log(x)+b*Math.log(1-x));
+  return x<(a+1)/(a+b+2)?bt*betacf(a,b,x)/a:1-bt*betacf(b,a,1-x)/b;
+}
+function gammaincP(s,x){ // 正則化下側不完全ガンマ P(s,x)
+  if(x<=0)return 0;
+  if(x<s+1){
+    let term=1/s,sum=term;
+    for(let n=1;n<600;n++){term*=x/(s+n);sum+=term;if(term<sum*1e-15)break;}
+    return sum*Math.exp(-x+s*Math.log(x)-lgamma(s));
+  }
+  let b=x+1-s,c=1e300,d=1/b,h=d;
+  for(let i=1;i<600;i++){
+    const an=-i*(i-s);b+=2;
+    d=an*d+b;if(Math.abs(d)<1e-300)d=1e-300;
+    c=b+an/c;if(Math.abs(c)<1e-300)c=1e-300;
+    d=1/d;const del=d*c;h*=del;
+    if(Math.abs(del-1)<1e-15)break;
+  }
+  return 1-h*Math.exp(-x+s*Math.log(x)-lgamma(s));
+}
+function normCDF(z){
+  if(!isFinite(z))return z>0?1:0;
+  const p=0.5*gammaincP(0.5,z*z/2);
+  return z>=0?0.5+p:0.5-p;
+}
+function normInv(p){ // Acklam近似
+  if(p<=0)return -Infinity;if(p>=1)return Infinity;
+  const a=[-3.969683028665376e+01,2.209460984245205e+02,-2.759285104469687e+02,1.383577518672690e+02,-3.066479806614716e+01,2.506628277459239e+00];
+  const b=[-5.447609879822406e+01,1.615858368580409e+02,-1.556989798598866e+02,6.680131188771972e+01,-1.328068155288572e+01];
+  const c=[-7.784894002430293e-03,-3.223964580411365e-01,-2.400758277161838e+00,-2.549732539343734e+00,4.374664141464968e+00,2.938163982698783e+00];
+  const d=[7.784695709041462e-03,3.224671290700398e-01,2.445134137142996e+00,3.754408661907416e+00];
+  const pl=0.02425;let q,r;
+  if(p<pl){q=Math.sqrt(-2*Math.log(p));return(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}
+  if(p>1-pl){q=Math.sqrt(-2*Math.log(1-p));return-(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}
+  q=p-0.5;r=q*q;
+  return(((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q/(((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);
+}
+function tCDF(t,df){ // 下側確率
+  if(!isFinite(t))return t>0?1:0;
+  const x=df/(df+t*t);
+  const p=0.5*ibeta(df/2,0.5,x);
+  return t>=0?1-p:p;
+}
+function tPvalue(t,df){return 2*(1-tCDF(Math.abs(t),df));} // 両側
+function tQuantile(p,df){ // 下側p分位点（二分法）
+  if(p<=0)return -Infinity;if(p>=1)return Infinity;
+  let lo=-500,hi=500;
+  for(let i=0;i<200;i++){const mid=(lo+hi)/2;if(tCDF(mid,df)<p)lo=mid;else hi=mid;}
+  return (lo+hi)/2;
+}
+function fPvalue(F,d1,d2){ // 上側確率
+  if(F<=0)return 1;
+  return 1-ibeta(d1/2,d2/2,d1*F/(d1*F+d2));
+}
+function chi2Pvalue(x,k){if(x<=0)return 1;return 1-gammaincP(k/2,x/2);}
+
+/* ---------------- 基本統計量 ---------------- */
+function sum(v){let s=0;for(const x of v)s+=x;return s;}
+function mean(v){return sum(v)/v.length;}
+function variance(v){ // 不偏分散
+  if(v.length<2)return NaN;
+  const m=mean(v);let s=0;for(const x of v)s+=(x-m)*(x-m);
+  return s/(v.length-1);
+}
+function sd(v){return Math.sqrt(variance(v));}
+function quantile(v,q){ // R type-7
+  const s=[...v].sort((a,b)=>a-b);
+  if(s.length===0)return NaN;
+  const h=(s.length-1)*q,lo=Math.floor(h),hi=Math.ceil(h);
+  return s[lo]+(h-lo)*(s[hi]-s[lo]);
+}
+function median(v){return quantile(v,0.5);}
+function ranksAvg(v){ // 同順位は平均ランク、タイ情報も返す
+  const idx=v.map((x,i)=>[x,i]).sort((a,b)=>a[0]-b[0]);
+  const ranks=new Array(v.length);const ties=[];
+  let i=0;
+  while(i<idx.length){
+    let j=i;
+    while(j+1<idx.length&&idx[j+1][0]===idx[i][0])j++;
+    const r=(i+j)/2+1;
+    for(let k=i;k<=j;k++)ranks[idx[k][1]]=r;
+    if(j>i)ties.push(j-i+1);
+    i=j+1;
+  }
+  return {ranks,ties};
+}
+function polyAsc(cs,x){let r=0;for(let i=cs.length-1;i>=0;i--)r=r*x+cs[i];return r;}
+
+/* ---------------- Shapiro-Wilk 正規性検定 (Royston AS R94) ---------------- */
+function shapiroWilk(data){
+  const x=[...data].sort((a,b)=>a-b);const n=x.length;
+  if(n<3)return null;
+  if(x[n-1]-x[0]===0)return null; // 全て同値
+  const m=new Array(n);
+  for(let i=0;i<n;i++)m[i]=normInv(((i+1)-0.375)/(n+0.25));
+  let mm=0;for(const v of m)mm+=v*v;
+  const rsn=1/Math.sqrt(n);
+  const a=new Array(n).fill(0);
+  if(n>5){
+    const cn=m[n-1]/Math.sqrt(mm),cn1=m[n-2]/Math.sqrt(mm);
+    a[n-1]=polyAsc([cn,0.221157,-0.147981,-2.071190,4.434685,-2.706056],rsn);
+    a[n-2]=polyAsc([cn1,0.042981,-0.293762,-1.752461,5.682633,-3.582633],rsn);
+    const phi=(mm-2*m[n-1]*m[n-1]-2*m[n-2]*m[n-2])/(1-2*a[n-1]*a[n-1]-2*a[n-2]*a[n-2]);
+    for(let i=2;i<n-2;i++)a[i]=m[i]/Math.sqrt(phi);
+    a[0]=-a[n-1];a[1]=-a[n-2];
+  }else{
+    if(n===3){a[0]=-Math.SQRT1_2;a[2]=Math.SQRT1_2;}
+    else{
+      const cn=m[n-1]/Math.sqrt(mm);
+      a[n-1]=polyAsc([cn,0.221157,-0.147981,-2.071190,4.434685,-2.706056],rsn);
+      const phi=(mm-2*m[n-1]*m[n-1])/(1-2*a[n-1]*a[n-1]);
+      for(let i=1;i<n-1;i++)a[i]=m[i]/Math.sqrt(phi);
+      a[0]=-a[n-1];
+    }
+  }
+  const mx=mean(x);
+  let num=0,den=0;
+  for(let i=0;i<n;i++){num+=a[i]*x[i];den+=(x[i]-mx)*(x[i]-mx);}
+  let W=num*num/den;
+  if(W>1)W=1;
+  let p;
+  if(n===3){
+    p=Math.max(0,Math.min(1,(6/Math.PI)*(Math.asin(Math.sqrt(W))-Math.asin(Math.sqrt(0.75)))));
+  }else if(n<=11){
+    const g=-2.273+0.459*n;
+    const mu=polyAsc([0.5440,-0.39978,0.025054,-6.714e-4],n);
+    const sig=Math.exp(polyAsc([1.3822,-0.77857,0.062767,-0.0020322],n));
+    const z=(-Math.log(g-Math.log(1-W))-mu)/sig;
+    p=1-normCDF(z);
+  }else{
+    const ln=Math.log(n);
+    const mu=polyAsc([-1.5861,-0.31082,-0.083751,0.0038915],ln);
+    const sig=Math.exp(polyAsc([-0.4803,-0.082676,0.0030302],ln));
+    const z=(Math.log(1-W)-mu)/sig;
+    p=1-normCDF(z);
+  }
+  return {W,p,n};
+}
+/* ---------------- 行列演算 ---------------- */
+function matMul(A,B){
+  const n=A.length,m=B[0].length,k=B.length;
+  const C=Array.from({length:n},()=>new Array(m).fill(0));
+  for(let i=0;i<n;i++)for(let l=0;l<k;l++){const a=A[i][l];if(a===0)continue;for(let j=0;j<m;j++)C[i][j]+=a*B[l][j];}
+  return C;
+}
+function matT(A){return A[0].map((_,j)=>A.map(r=>r[j]));}
+function matInv(A){ // Gauss-Jordan（部分ピボット）
+  const n=A.length;
+  const M=A.map((r,i)=>[...r,...Array.from({length:n},(_,j)=>i===j?1:0)]);
+  for(let col=0;col<n;col++){
+    let piv=col;
+    for(let r=col+1;r<n;r++)if(Math.abs(M[r][col])>Math.abs(M[piv][col]))piv=r;
+    if(Math.abs(M[piv][col])<1e-12)return null; // 特異行列
+    [M[col],M[piv]]=[M[piv],M[col]];
+    const d=M[col][col];
+    for(let j=0;j<2*n;j++)M[col][j]/=d;
+    for(let r=0;r<n;r++){
+      if(r===col)continue;
+      const f=M[r][col];if(f===0)continue;
+      for(let j=0;j<2*n;j++)M[r][j]-=f*M[col][j];
+    }
+  }
+  return M.map(r=>r.slice(n));
+}
+function solveSym(A,b){const inv=matInv(A);if(!inv)return null;return inv.map(r=>r.reduce((s,v,j)=>s+v*b[j],0));}
+
+/* ---------------- 検定：連続量 ---------------- */
+function descStats(v){
+  const n=v.length;
+  const q1=quantile(v,0.25),q3=quantile(v,0.75);
+  return {n,mean:mean(v),sd:sd(v),se:sd(v)/Math.sqrt(n),median:median(v),q1,q3,iqr:q3-q1,
+          min:Math.min(...v),max:Math.max(...v)};
+}
+function tTest2(x,y,{welch=true}={}){
+  const n1=x.length,n2=y.length,m1=mean(x),m2=mean(y),v1=variance(x),v2=variance(y);
+  let t,df,se;
+  if(welch){
+    se=Math.sqrt(v1/n1+v2/n2);
+    t=(m1-m2)/se;
+    df=Math.pow(v1/n1+v2/n2,2)/(Math.pow(v1/n1,2)/(n1-1)+Math.pow(v2/n2,2)/(n2-1));
+  }else{
+    const sp2=((n1-1)*v1+(n2-1)*v2)/(n1+n2-2);
+    se=Math.sqrt(sp2*(1/n1+1/n2));
+    t=(m1-m2)/se;df=n1+n2-2;
+  }
+  const p=tPvalue(t,df);
+  const tc=tQuantile(0.975,df);
+  const d=(m1-m2)/Math.sqrt(((n1-1)*v1+(n2-1)*v2)/(n1+n2-2)); // Cohen's d (pooled)
+  return {t,df,p,diff:m1-m2,ciLo:m1-m2-tc*se,ciHi:m1-m2+tc*se,cohenD:d,welch};
+}
+function tTestPaired(x,y){
+  const d=x.map((v,i)=>v-y[i]);
+  const n=d.length,md=mean(d),sdd=sd(d),se=sdd/Math.sqrt(n);
+  const t=md/se,df=n-1,p=tPvalue(t,df);
+  const tc=tQuantile(0.975,df);
+  return {t,df,p,diff:md,ciLo:md-tc*se,ciHi:md+tc*se,cohenD:md/sdd,d};
+}
+function mannWhitney(x,y){
+  const n1=x.length,n2=y.length,N=n1+n2;
+  const all=[...x,...y];
+  const {ranks,ties}=ranksAvg(all);
+  let r1=0;for(let i=0;i<n1;i++)r1+=ranks[i];
+  const U1=r1-n1*(n1+1)/2;
+  const U=Math.min(U1,n1*n2-U1);
+  const mu=n1*n2/2;
+  let tieSum=0;for(const t of ties)tieSum+=t*t*t-t;
+  const sig=Math.sqrt(n1*n2/12*((N+1)-tieSum/(N*(N-1))));
+  if(sig===0)return {U,z:0,p:1,r:0};
+  const z=(U1-mu-Math.sign(U1-mu)*0.5)/sig; // 連続性補正
+  const p=2*(1-normCDF(Math.abs(z)));
+  return {U,U1,z,p:Math.min(1,p),r:Math.abs(z)/Math.sqrt(N)};
+}
+function wilcoxonSigned(x,y){
+  const dRaw=x.map((v,i)=>v-y[i]).filter(v=>v!==0);
+  const n=dRaw.length;
+  if(n<1)return {n:0,p:1,W:0,z:0};
+  const absd=dRaw.map(Math.abs);
+  const {ranks,ties}=ranksAvg(absd);
+  let Wp=0,Wm=0;
+  for(let i=0;i<n;i++){if(dRaw[i]>0)Wp+=ranks[i];else Wm+=ranks[i];}
+  const W=Math.min(Wp,Wm);
+  const mu=n*(n+1)/4;
+  let tieSum=0;for(const t of ties)tieSum+=t*t*t-t;
+  const sig=Math.sqrt(n*(n+1)*(2*n+1)/24-tieSum/48);
+  if(sig===0)return {n,W,z:0,p:1};
+  const z=(W-mu+0.5)/sig;
+  const p=Math.min(1,2*(1-normCDF(Math.abs(z))));
+  return {n,W,Wp,Wm,z,p,r:Math.abs(z)/Math.sqrt(n)};
+}
+function anova1(groups){ // groups: [{label, values}]
+  const k=groups.length;
+  const all=groups.flatMap(g=>g.values);
+  const N=all.length,gm=mean(all);
+  let ssb=0,ssw=0;
+  for(const g of groups){
+    const m=mean(g.values);
+    ssb+=g.values.length*(m-gm)*(m-gm);
+    for(const v of g.values)ssw+=(v-m)*(v-m);
+  }
+  const df1=k-1,df2=N-k;
+  const F=(ssb/df1)/(ssw/df2);
+  const p=fPvalue(F,df1,df2);
+  return {F,df1,df2,p,eta2:ssb/(ssb+ssw),N};
+}
+function kruskalWallis(groups){
+  const k=groups.length;
+  const all=groups.flatMap(g=>g.values);
+  const N=all.length;
+  const {ranks,ties}=ranksAvg(all);
+  let H=0,pos=0;
+  const meanRanks=[];
+  for(const g of groups){
+    let r=0;for(let i=0;i<g.values.length;i++)r+=ranks[pos+i];
+    meanRanks.push(r/g.values.length);
+    H+=r*r/g.values.length;
+    pos+=g.values.length;
+  }
+  H=12/(N*(N+1))*H-3*(N+1);
+  let tieSum=0;for(const t of ties)tieSum+=t*t*t-t;
+  const corr=1-tieSum/(N*N*N-N);
+  if(corr>0)H/=corr;
+  const df=k-1,p=chi2Pvalue(H,df);
+  return {H,df,p,eps2:(H-k+1)/(N-k),meanRanks,N,tieSum};
+}
+function holm(ps){ // Holm補正
+  const idx=ps.map((p,i)=>[p,i]).sort((a,b)=>a[0]-b[0]);
+  const m=ps.length,out=new Array(m);
+  let prev=0;
+  idx.forEach(([p,i],rank)=>{
+    const adj=Math.min(1,Math.max(prev,(m-rank)*p));
+    out[i]=adj;prev=adj;
+  });
+  return out;
+}
+function pairwiseWelch(groups){ // 事後検定: Welch t + Holm
+  const pairs=[];
+  for(let i=0;i<groups.length;i++)for(let j=i+1;j<groups.length;j++){
+    const r=tTest2(groups[i].values,groups[j].values,{welch:true});
+    pairs.push({a:groups[i].label,b:groups[j].label,diff:r.diff,p:r.p,t:r.t});
+  }
+  const adj=holm(pairs.map(p=>p.p));
+  pairs.forEach((p,i)=>p.pAdj=adj[i]);
+  return pairs;
+}
+function dunnTest(groups){ // KW事後: Dunn + Holm
+  const all=groups.flatMap(g=>g.values);
+  const N=all.length;
+  const {ranks,ties}=ranksAvg(all);
+  let pos=0;const mr=[],ns=[];
+  for(const g of groups){
+    let r=0;for(let i=0;i<g.values.length;i++)r+=ranks[pos+i];
+    mr.push(r/g.values.length);ns.push(g.values.length);pos+=g.values.length;
+  }
+  let tieSum=0;for(const t of ties)tieSum+=t*t*t-t;
+  const base=N*(N+1)/12-tieSum/(12*(N-1));
+  const pairs=[];
+  for(let i=0;i<groups.length;i++)for(let j=i+1;j<groups.length;j++){
+    const se=Math.sqrt(base*(1/ns[i]+1/ns[j]));
+    const z=(mr[i]-mr[j])/se;
+    pairs.push({a:groups[i].label,b:groups[j].label,z,p:2*(1-normCDF(Math.abs(z)))});
+  }
+  const adj=holm(pairs.map(p=>p.p));
+  pairs.forEach((p,i)=>p.pAdj=adj[i]);
+  return pairs;
+}
+
+/* ---------------- 検定：分割表 ---------------- */
+function chi2Test(table){ // table: 2次元配列（行×列）
+  const R=table.length,C=table[0].length;
+  const rowSum=table.map(r=>sum(r));
+  const colSum=table[0].map((_,j)=>sum(table.map(r=>r[j])));
+  const N=sum(rowSum);
+  let chi2=0,minExp=Infinity,lowExpCells=0;
+  const expected=table.map((row,i)=>row.map((_,j)=>{
+    const e=rowSum[i]*colSum[j]/N;
+    if(e<minExp)minExp=e;
+    if(e<5)lowExpCells++;
+    return e;
+  }));
+  for(let i=0;i<R;i++)for(let j=0;j<C;j++){
+    const e=expected[i][j];
+    if(e>0)chi2+=Math.pow(table[i][j]-e,2)/e;
+  }
+  const df=(R-1)*(C-1);
+  const p=chi2Pvalue(chi2,df);
+  const cramerV=Math.sqrt(chi2/(N*Math.min(R-1,C-1)));
+  return {chi2,df,p,cramerV,expected,minExp,lowExpCells,totalCells:R*C,N,rowSum,colSum};
+}
+function fisherExact2x2(a,b,c,d){ // 両側（確率法）：P(X=x)≦P(X=a) となる x の確率を合算
+  const n=a+b+c+d,r1=a+b,c1=a+c;
+  const logP=(x)=>{
+    const b2=r1-x,c2=c1-x,d2=n-r1-c1+x;
+    if(x<0||b2<0||c2<0||d2<0)return -Infinity;
+    return lgamma(r1+1)+lgamma(n-r1+1)+lgamma(c1+1)+lgamma(n-c1+1)-lgamma(n+1)
+          -lgamma(x+1)-lgamma(b2+1)-lgamma(c2+1)-lgamma(d2+1);
+  };
+  const pObs=logP(a);
+  let p=0;
+  const lo=Math.max(0,c1-(n-r1)),hi=Math.min(r1,c1);
+  for(let x=lo;x<=hi;x++){
+    const px=logP(x);
+    if(px<=pObs+1e-7)p+=Math.exp(px);
+  }
+  return {p:Math.min(1,p)};
+}
+function orRr2x2(a,b,c,d){ // オッズ比・リスク比（Haldane補正付き）
+  const z=(a===0||b===0||c===0||d===0)?0.5:0;
+  const A=a+z,B=b+z,C=c+z,D=d+z;
+  const or=(A*D)/(B*C);
+  const seLnOr=Math.sqrt(1/A+1/B+1/C+1/D);
+  const rr=(A/(A+B))/(C/(C+D));
+  const seLnRr=Math.sqrt(1/A-1/(A+B)+1/C-1/(C+D));
+  const q=1.959963984540054;
+  return {
+    or,orLo:Math.exp(Math.log(or)-q*seLnOr),orHi:Math.exp(Math.log(or)+q*seLnOr),
+    rr,rrLo:Math.exp(Math.log(rr)-q*seLnRr),rrHi:Math.exp(Math.log(rr)+q*seLnRr),
+    corrected:z>0
+  };
+}
+
+/* ---------------- 相関 ---------------- */
+function pearson(x,y){
+  const n=x.length,mx=mean(x),my=mean(y);
+  let sxy=0,sxx=0,syy=0;
+  for(let i=0;i<n;i++){sxy+=(x[i]-mx)*(y[i]-my);sxx+=(x[i]-mx)*(x[i]-mx);syy+=(y[i]-my)*(y[i]-my);}
+  if(sxx===0||syy===0)return {r:NaN,p:NaN,n};
+  const r=sxy/Math.sqrt(sxx*syy);
+  const t=r*Math.sqrt((n-2)/(1-r*r));
+  const p=tPvalue(t,n-2);
+  // Fisher z による95%CI
+  const zr=0.5*Math.log((1+r)/(1-r)),sez=1/Math.sqrt(n-3);
+  const q=1.959963984540054;
+  return {r,p,n,ciLo:Math.tanh(zr-q*sez),ciHi:Math.tanh(zr+q*sez)};
+}
+function spearman(x,y){
+  const rx=ranksAvg(x).ranks,ry=ranksAvg(y).ranks;
+  const res=pearson(rx,ry);
+  return {rho:res.r,p:res.p,n:x.length,ciLo:res.ciLo,ciHi:res.ciHi};
+}
+
+/* ---------------- 回帰 ---------------- */
+function linReg(X,y,names){ // X: n×p（切片列含む） names: 係数名
+  const n=X.length,p=X[0].length;
+  const Xt=matT(X);
+  const XtX=matMul(Xt,X);
+  const inv=matInv(XtX);
+  if(!inv)return {error:"説明変数が互いに強く相関しており（多重共線性）、係数を計算できません。"};
+  const Xty=Xt.map(r=>r.reduce((s,v,i)=>s+v*y[i],0));
+  const beta=inv.map(r=>r.reduce((s,v,j)=>s+v*Xty[j],0));
+  const yhat=X.map(row=>row.reduce((s,v,j)=>s+v*beta[j],0));
+  const resid=y.map((v,i)=>v-yhat[i]);
+  const my=mean(y);
+  const sse=sum(resid.map(r=>r*r));
+  const sst=sum(y.map(v=>(v-my)*(v-my)));
+  const df=n-p;
+  const sigma2=sse/df;
+  const se=beta.map((_,j)=>Math.sqrt(sigma2*inv[j][j]));
+  const tvals=beta.map((b,j)=>b/se[j]);
+  const ps=tvals.map(t=>tPvalue(t,df));
+  const tc=tQuantile(0.975,df);
+  const r2=1-sse/sst;
+  const adjR2=1-(1-r2)*(n-1)/df;
+  const F=((sst-sse)/(p-1))/sigma2;
+  const modelP=p>1?fPvalue(F,p-1,df):NaN;
+  return {beta,se,tvals,ps,ciLo:beta.map((b,j)=>b-tc*se[j]),ciHi:beta.map((b,j)=>b+tc*se[j]),
+          r2,adjR2,F,modelP,df,n,names,yhat,resid,rmse:Math.sqrt(sigma2)};
+}
+function logisticReg(X,y,names){ // IRLS ロジスティック回帰
+  const n=X.length,p=X[0].length;
+  let beta=new Array(p).fill(0);
+  let converged=false,iter=0;
+  for(iter=0;iter<60;iter++){
+    const eta=X.map(row=>row.reduce((s,v,j)=>s+v*beta[j],0));
+    const mu=eta.map(e=>1/(1+Math.exp(-Math.max(-35,Math.min(35,e)))));
+    const w=mu.map(m=>Math.max(1e-10,m*(1-m)));
+    const grad=new Array(p).fill(0);
+    for(let i=0;i<n;i++)for(let j=0;j<p;j++)grad[j]+=X[i][j]*(y[i]-mu[i]);
+    const H=Array.from({length:p},()=>new Array(p).fill(0));
+    for(let i=0;i<n;i++)for(let j=0;j<p;j++){const wx=w[i]*X[i][j];for(let k2=j;k2<p;k2++)H[j][k2]+=wx*X[i][k2];}
+    for(let j=0;j<p;j++)for(let k2=0;k2<j;k2++)H[j][k2]=H[k2][j];
+    const delta=solveSym(H,grad);
+    if(!delta)return {error:"モデルを推定できません（変数間の共線性、またはデータ不足の可能性）。"};
+    let maxd=0;
+    for(let j=0;j<p;j++){beta[j]+=delta[j];maxd=Math.max(maxd,Math.abs(delta[j]));}
+    if(maxd<1e-8){converged=true;break;}
+  }
+  const sep=beta.some(b=>Math.abs(b)>15);
+  const eta=X.map(row=>row.reduce((s,v,j)=>s+v*beta[j],0));
+  const mu=eta.map(e=>1/(1+Math.exp(-Math.max(-35,Math.min(35,e)))));
+  const w=mu.map(m=>Math.max(1e-10,m*(1-m)));
+  const H=Array.from({length:p},()=>new Array(p).fill(0));
+  for(let i=0;i<n;i++)for(let j=0;j<p;j++){const wx=w[i]*X[i][j];for(let k2=j;k2<p;k2++)H[j][k2]+=wx*X[i][k2];}
+  for(let j=0;j<p;j++)for(let k2=0;k2<j;k2++)H[j][k2]=H[k2][j];
+  const cov=matInv(H);
+  if(!cov)return {error:"標準誤差を計算できません（共線性の可能性）。"};
+  const se=beta.map((_,j)=>Math.sqrt(Math.abs(cov[j][j])));
+  const zvals=beta.map((b,j)=>b/se[j]);
+  const ps=zvals.map(z=>2*(1-normCDF(Math.abs(z))));
+  const q=1.959963984540054;
+  // 対数尤度・モデル検定・AUC
+  let ll=0;for(let i=0;i<n;i++)ll+=y[i]*Math.log(Math.max(1e-15,mu[i]))+(1-y[i])*Math.log(Math.max(1e-15,1-mu[i]));
+  const p1=mean(y);
+  const ll0=n*(p1*Math.log(Math.max(1e-15,p1))+(1-p1)*Math.log(Math.max(1e-15,1-p1)));
+  const lrChi2=2*(ll-ll0);
+  const modelP=p>1?chi2Pvalue(lrChi2,p-1):NaN;
+  // AUC（順位法）
+  const {ranks}=ranksAvg(mu);
+  let rPos=0,nPos=0;
+  for(let i=0;i<n;i++){if(y[i]===1){rPos+=ranks[i];nPos++;}}
+  const nNeg=n-nPos;
+  const auc=nPos>0&&nNeg>0?(rPos-nPos*(nPos+1)/2)/(nPos*nNeg):NaN;
+  return {beta,se,zvals,ps,or:beta.map(Math.exp),
+          orLo:beta.map((b,j)=>Math.exp(b-q*se[j])),orHi:beta.map((b,j)=>Math.exp(b+q*se[j])),
+          converged,separation:sep,ll,lrChi2,modelP,mcfadden:1-ll/ll0,auc,n,nPos,names,iter};
+}
+
+/* ---------------- 生存解析 ---------------- */
+function kaplanMeier(times,events){ // 単一群のKM推定
+  const idx=times.map((t,i)=>i).sort((a,b)=>times[a]-times[b]);
+  const steps=[{t:0,s:1}];
+  let s=1,i=0;
+  const censors=[];
+  const n=times.length;
+  let atRisk=n;
+  const sorted=idx.map(i2=>({t:times[i2],e:events[i2]}));
+  while(i<n){
+    const t=sorted[i].t;
+    let d=0,c=0;
+    while(i<n&&sorted[i].t===t){if(sorted[i].e)d++;else c++;i++;}
+    if(d>0){
+      s*=(atRisk-d)/atRisk;
+      steps.push({t,s});
+    }
+    if(c>0)censors.push({t,s});
+    atRisk-=d+c;
+  }
+  // 中央値：S(t)<=0.5 となる最初のイベント時刻
+  let med=null;
+  for(const st of steps)if(st.t>0&&st.s<=0.5){med=st.t;break;}
+  return {steps,censors,median:med,n,events:sum(events),maxT:Math.max(...times)};
+}
+function atRiskAt(times,t){let c=0;for(const x of times)if(x>=t)c++;return c;}
+function logRank(groups){ // groups: [{label,times,events}] k群対応
+  const k=groups.length;
+  const allEventTimes=[...new Set(groups.flatMap(g=>g.times.filter((t,i)=>g.events[i]===1)))].sort((a,b)=>a-b);
+  const O=new Array(k).fill(0),E=new Array(k).fill(0);
+  const V=Array.from({length:k},()=>new Array(k).fill(0));
+  for(const t of allEventTimes){
+    const nAt=groups.map(g=>atRiskAt(g.times,t));
+    const N=sum(nAt);
+    if(N<=1)continue;
+    const dAt=groups.map(g=>{let d=0;for(let i=0;i<g.times.length;i++)if(g.times[i]===t&&g.events[i]===1)d++;return d;});
+    const D=sum(dAt);
+    if(D===0)continue;
+    for(let g=0;g<k;g++){
+      O[g]+=dAt[g];
+      E[g]+=D*nAt[g]/N;
+      for(let h=0;h<k;h++){
+        const delta=g===h?1:0;
+        if(N>1)V[g][h]+=D*(nAt[g]/N)*(delta-nAt[h]/N)*(N-D)/(N-1);
+      }
+    }
+  }
+  // 先頭k-1次元で χ² = (O-E)' V⁻¹ (O-E)
+  const d=O.map((o,g)=>o-E[g]).slice(0,k-1);
+  const Vsub=V.slice(0,k-1).map(r=>r.slice(0,k-1));
+  const inv=matInv(Vsub);
+  let chi2=0;
+  if(inv){
+    for(let i=0;i<k-1;i++)for(let j=0;j<k-1;j++)chi2+=d[i]*inv[i][j]*d[j];
+  }
+  const df=k-1;
+  return {chi2,df,p:chi2Pvalue(chi2,df),O,E};
+}
+function coxPH(times,events,X,names){ // Cox比例ハザード（Efron法）
+  const n=times.length,p=X[0].length;
+  const ord=times.map((_,i)=>i).sort((a,b)=>times[a]-times[b]);
+  const T=ord.map(i=>times[i]),EV=ord.map(i=>events[i]),XX=ord.map(i=>X[i]);
+  let beta=new Array(p).fill(0);
+  let converged=false;
+  // 距離のあるイベント時刻グループ
+  const eventTimes=[...new Set(T.filter((t,i)=>EV[i]===1))].sort((a,b)=>a-b);
+  for(let iter=0;iter<60;iter++){
+    const xb=XX.map(row=>row.reduce((s,v,j)=>s+v*beta[j],0));
+    const ex=xb.map(e=>Math.exp(Math.max(-300,Math.min(300,e))));
+    const U=new Array(p).fill(0);
+    const I=Array.from({length:p},()=>new Array(p).fill(0));
+    for(const t of eventTimes){
+      const Ridx=[],Didx=[];
+      for(let i=0;i<n;i++){
+        if(T[i]>=t)Ridx.push(i);
+        if(T[i]===t&&EV[i]===1)Didx.push(i);
+      }
+      const dcnt=Didx.length;
+      let s0R=0;const s1R=new Array(p).fill(0);const s2R=Array.from({length:p},()=>new Array(p).fill(0));
+      for(const i of Ridx){
+        s0R+=ex[i];
+        for(let j=0;j<p;j++){
+          s1R[j]+=ex[i]*XX[i][j];
+          for(let k2=j;k2<p;k2++)s2R[j][k2]+=ex[i]*XX[i][j]*XX[i][k2];
+        }
+      }
+      let s0D=0;const s1D=new Array(p).fill(0);const s2D=Array.from({length:p},()=>new Array(p).fill(0));
+      const xSumD=new Array(p).fill(0);
+      for(const i of Didx){
+        s0D+=ex[i];
+        for(let j=0;j<p;j++){
+          s1D[j]+=ex[i]*XX[i][j];xSumD[j]+=XX[i][j];
+          for(let k2=j;k2<p;k2++)s2D[j][k2]+=ex[i]*XX[i][j]*XX[i][k2];
+        }
+      }
+      for(let l=0;l<dcnt;l++){
+        const f=l/dcnt;
+        const d0=s0R-f*s0D;
+        for(let j=0;j<p;j++){
+          const d1j=s1R[j]-f*s1D[j];
+          U[j]+=xSumD[j]/dcnt-d1j/d0;
+          for(let k2=j;k2<p;k2++){
+            const d1k=s1R[k2]-f*s1D[k2];
+            const d2=(k2>=j?(s2R[j][k2]-f*s2D[j][k2]):0);
+            I[j][k2]+=d2/d0-(d1j*d1k)/(d0*d0);
+          }
+        }
+      }
+    }
+    for(let j=0;j<p;j++)for(let k2=0;k2<j;k2++)I[j][k2]=I[k2][j];
+    const delta=solveSym(I,U);
+    if(!delta)return {error:"モデルを推定できません（共線性、またはイベント数不足の可能性）。"};
+    let maxd=0;
+    for(let j=0;j<p;j++){beta[j]+=delta[j];maxd=Math.max(maxd,Math.abs(delta[j]));}
+    if(maxd<1e-8){converged=true;break;}
+  }
+  // 最終情報行列から分散
+  const xb=XX.map(row=>row.reduce((s,v,j)=>s+v*beta[j],0));
+  const ex=xb.map(e=>Math.exp(Math.max(-300,Math.min(300,e))));
+  const I=Array.from({length:p},()=>new Array(p).fill(0));
+  for(const t of eventTimes){
+    const Ridx=[],Didx=[];
+    for(let i=0;i<n;i++){
+      if(T[i]>=t)Ridx.push(i);
+      if(T[i]===t&&EV[i]===1)Didx.push(i);
+    }
+    const dcnt=Didx.length;
+    let s0R=0;const s1R=new Array(p).fill(0);const s2R=Array.from({length:p},()=>new Array(p).fill(0));
+    for(const i of Ridx){
+      s0R+=ex[i];
+      for(let j=0;j<p;j++){s1R[j]+=ex[i]*XX[i][j];for(let k2=j;k2<p;k2++)s2R[j][k2]+=ex[i]*XX[i][j]*XX[i][k2];}
+    }
+    let s0D=0;const s1D=new Array(p).fill(0);const s2D=Array.from({length:p},()=>new Array(p).fill(0));
+    for(const i of Didx){
+      s0D+=ex[i];
+      for(let j=0;j<p;j++){s1D[j]+=ex[i]*XX[i][j];for(let k2=j;k2<p;k2++)s2D[j][k2]+=ex[i]*XX[i][j]*XX[i][k2];}
+    }
+    for(let l=0;l<dcnt;l++){
+      const f=l/dcnt;
+      const d0=s0R-f*s0D;
+      for(let j=0;j<p;j++){
+        const d1j=s1R[j]-f*s1D[j];
+        for(let k2=j;k2<p;k2++){
+          const d1k=s1R[k2]-f*s1D[k2];
+          I[j][k2]+=(s2R[j][k2]-f*s2D[j][k2])/d0-(d1j*d1k)/(d0*d0);
+        }
+      }
+    }
+  }
+  for(let j=0;j<p;j++)for(let k2=0;k2<j;k2++)I[j][k2]=I[k2][j];
+  const cov=matInv(I);
+  if(!cov)return {error:"標準誤差を計算できません。"};
+  const se=beta.map((_,j)=>Math.sqrt(Math.abs(cov[j][j])));
+  const zvals=beta.map((b,j)=>b/se[j]);
+  const ps=zvals.map(z=>2*(1-normCDF(Math.abs(z))));
+  const q=1.959963984540054;
+  // Harrell's C
+  let conc=0,tied=0,total=0;
+  for(let i=0;i<n;i++)for(let j2=0;j2<n;j2++){
+    if(i===j2)continue;
+    if(EV[i]===1&&(T[i]<T[j2]||(T[i]===T[j2]&&EV[j2]===0))){
+      total++;
+      if(xb[i]>xb[j2])conc++;
+      else if(xb[i]===xb[j2])tied++;
+    }
+  }
+  const cIndex=total>0?(conc+0.5*tied)/total:NaN;
+  return {beta,se,zvals,ps,hr:beta.map(Math.exp),
+          hrLo:beta.map((b,j)=>Math.exp(b-q*se[j])),hrHi:beta.map((b,j)=>Math.exp(b+q*se[j])),
+          converged,cIndex,n,nEvents:sum(EV),names};
+}
+
+/* =====================================================================
+   PrismLab 拡張統計エンジン
+   ===================================================================== */
+/* ---- 高速な正規分布関数（多重比較の数値積分用） ---- */
+const ERFC_COF=[-1.3026537197817094,6.4196979235649026e-1,1.9476473204185836e-2,-9.561514786808631e-3,
+-9.46595344482036e-4,3.66839497852761e-4,4.2523324806907e-5,-2.0278578112534e-5,-1.624290004647e-6,
+1.303655835580e-6,1.5626441722e-8,-8.5238095915e-8,6.529054439e-9,5.059343495e-9,-9.91364156e-10,
+-2.27365122e-10,9.6467911e-11,2.394038e-12,-6.886027e-12,8.94487e-13,3.13092e-13,-1.12708e-13,3.81e-16,7.106e-15];
+function erfcFast(x){
+  const z=Math.abs(x),t=2/(2+z),ty=4*t-2;
+  let d=0,dd=0;
+  for(let j=ERFC_COF.length-1;j>0;j--){const tmp=d;d=ty*d-dd+ERFC_COF[j];dd=tmp;}
+  const ans=t*Math.exp(-z*z+0.5*(ERFC_COF[0]+ty*d)-dd);
+  return x>=0?ans:2-ans;
+}
+function ncdf(z){return 0.5*erfcFast(-z/Math.SQRT2);}
+function npdf(z){return 0.3989422804014327*Math.exp(-0.5*z*z);}
+
+/* ---- ステューデント化範囲分布（Tukey法） ---- */
+function prange(w,k){ // k個の標準正規の範囲が w 未満となる確率
+  if(w<=0)return 0;
+  const N=140,lo=-8.5,hi=8.5,h=(hi-lo)/N;
+  let s=0;
+  for(let i=0;i<=N;i++){
+    const z=lo+i*h;
+    const inner=ncdf(z)-ncdf(z-w);
+    const f=k*npdf(z)*Math.pow(Math.max(0,inner),k-1);
+    s+=((i===0||i===N)?1:(i%2?4:2))*f;
+  }
+  return Math.min(1,Math.max(0,s*h/3));
+}
+function ptukey(q,k,df){ // P(Q < q)
+  if(q<=0)return 0;
+  if(!isFinite(df)||df>3000)return prange(q,k);
+  const c=(df/2)*Math.log(df)-lgamma(df/2)-(df/2-1)*Math.LN2;
+  const sd0=1/Math.sqrt(2*df);
+  const lo=Math.max(1e-6,1-9*sd0),hi=1+9*sd0;
+  const N=120,h=(hi-lo)/N;
+  let acc=0;
+  for(let i=0;i<=N;i++){
+    const s=lo+i*h;
+    const lf=c+(df-1)*Math.log(s)-df*s*s/2;
+    const f=Math.exp(lf)*prange(q*s,k);
+    acc+=((i===0||i===N)?1:(i%2?4:2))*f;
+  }
+  return Math.min(1,Math.max(0,acc*h/3));
+}
+function ptukeyP(q,k,df){return 1-ptukey(q,k,df);}
+function qtukey(p,k,df){ // 分位点（信頼区間用）
+  let lo=0,hi=30;
+  for(let i=0;i<60;i++){const m=(lo+hi)/2;if(ptukey(m,k,df)<p)lo=m;else hi=m;}
+  return (lo+hi)/2;
+}
+/* ---- Dunnett（対照群との比較）：1因子構造の厳密積分 ---- */
+function pdunnett(d,lam,df,twoSided=true){ // lam[i]=sqrt(n_i/(n_i+n0)) で相関 lam_i*lam_j
+  if(d<=0)return 1;
+  const inner=(s)=>{
+    const N=120,lo=-8.5,hi=8.5,h=(hi-lo)/N;
+    let acc=0;
+    for(let i=0;i<=N;i++){
+      const z=lo+i*h;
+      let prod=1;
+      for(const L of lam){
+        const den=Math.sqrt(Math.max(1e-9,1-L*L));
+        prod*= twoSided ? Math.max(0,ncdf((L*z+d*s)/den)-ncdf((L*z-d*s)/den))
+                        : Math.max(0,ncdf((L*z+d*s)/den));
+        if(prod<=0)break;
+      }
+      acc+=((i===0||i===N)?1:(i%2?4:2))*npdf(z)*prod;
+    }
+    return acc*h/3;
+  };
+  if(!isFinite(df)||df>3000)return Math.min(1,Math.max(0,1-inner(1)));
+  const c=(df/2)*Math.log(df)-lgamma(df/2)-(df/2-1)*Math.LN2;
+  const sd0=1/Math.sqrt(2*df);
+  const lo=Math.max(1e-6,1-9*sd0),hi=1+9*sd0;
+  const N=100,h=(hi-lo)/N;
+  let acc=0;
+  for(let i=0;i<=N;i++){
+    const s=lo+i*h;
+    const lf=c+(df-1)*Math.log(s)-df*s*s/2;
+    acc+=((i===0||i===N)?1:(i%2?4:2))*Math.exp(lf)*inner(s);
+  }
+  return Math.min(1,Math.max(0,1-acc*h/3));
+}
+/* ---- 各種p値補正 ---- */
+function bonferroni(ps){return ps.map(p=>Math.min(1,p*ps.length));}
+function sidakAdj(ps){const m=ps.length;return ps.map(p=>1-Math.pow(1-p,m));}
+function bhFDR(ps){ // Benjamini-Hochberg
+  const idx=ps.map((p,i)=>[p,i]).sort((a,b)=>b[0]-a[0]);
+  const m=ps.length,out=new Array(m);let prev=1;
+  idx.forEach(([p,i],r)=>{const rank=m-r;const adj=Math.min(prev,p*m/rank);out[i]=adj;prev=adj;});
+  return out;
+}
+/* ---- 記述統計（Prism仕様のフルセット） ---- */
+function describeFull(v,ci=0.95){
+  const n=v.length;
+  if(n===0)return null;
+  const m=mean(v),s=sd(v),se=s/Math.sqrt(n);
+  const tc=n>1?tQuantile(1-(1-ci)/2,n-1):NaN;
+  let m2=0,m3=0,m4=0;
+  for(const x of v){const d=x-m;m2+=d*d;m3+=d*d*d;m4+=d*d*d*d;}
+  m2/=n;m3/=n;m4/=n;
+  const g1=m2>0?m3/Math.pow(m2,1.5):NaN;
+  const g2=m2>0?m4/(m2*m2)-3:NaN;
+  const G1=n>2?g1*Math.sqrt(n*(n-1))/(n-2):NaN;
+  const G2=n>3?((n-1)/((n-2)*(n-3)))*((n+1)*g2+6):NaN;
+  const pos=v.every(x=>x>0);
+  const gm=pos?Math.exp(mean(v.map(Math.log))):NaN;
+  const gsd=pos&&n>1?Math.exp(sd(v.map(Math.log))):NaN;
+  return {n,mean:m,sd:s,se,ciLo:m-tc*se,ciHi:m+tc*se,ciLevel:ci,
+    median:median(v),q1:quantile(v,0.25),q3:quantile(v,0.75),
+    min:Math.min(...v),max:Math.max(...v),range:Math.max(...v)-Math.min(...v),
+    sum:sum(v),cv:s/Math.abs(m)*100,skew:G1,kurt:G2,geoMean:gm,geoSD:gsd,
+    p5:quantile(v,0.05),p95:quantile(v,0.95),p10:quantile(v,0.10),p90:quantile(v,0.90)};
+}
+/* ---- 正規性検定 ---- */
+function dagostino(v){
+  const n=v.length;
+  if(n<8)return null;
+  const m=mean(v);
+  let m2=0,m3=0,m4=0;
+  for(const x of v){const d=x-m;m2+=d*d;m3+=d*d*d;m4+=d*d*d*d;}
+  m2/=n;m3/=n;m4/=n;
+  const g1=m3/Math.pow(m2,1.5),b2=m4/(m2*m2);
+  const Y=g1*Math.sqrt((n+1)*(n+3)/(6*(n-2)));
+  const b2s=3*(n*n+27*n-70)*(n+1)*(n+3)/((n-2)*(n+5)*(n+7)*(n+9));
+  const W2=-1+Math.sqrt(2*(b2s-1));
+  const del=1/Math.sqrt(0.5*Math.log(W2));
+  const alp=Math.sqrt(2/(W2-1));
+  const Z1=del*Math.log(Y/alp+Math.sqrt(Math.pow(Y/alp,2)+1));
+  const E=3*(n-1)/(n+1);
+  const varb2=24*n*(n-2)*(n-3)/((n+1)*(n+1)*(n+3)*(n+5));
+  const xx=(b2-E)/Math.sqrt(varb2);
+  const sq=6*(n*n-5*n+2)/((n+7)*(n+9))*Math.sqrt(6*(n+3)*(n+5)/(n*(n-2)*(n-3)));
+  const A=6+8/sq*(2/sq+Math.sqrt(1+4/(sq*sq)));
+  const Z2=((1-2/(9*A))-Math.cbrt((1-2/A)/(1+xx*Math.sqrt(2/(A-4)))))/Math.sqrt(2/(9*A));
+  const K2=Z1*Z1+Z2*Z2;
+  return {K2,p:chi2Pvalue(K2,2),skewZ:Z1,kurtZ:Z2,skewP:2*(1-ncdf(Math.abs(Z1))),kurtP:2*(1-ncdf(Math.abs(Z2))),n};
+}
+function andersonDarling(v){
+  const x=[...v].sort((a,b)=>a-b),n=x.length;
+  if(n<8)return null;
+  const m=mean(x),s=sd(x);
+  if(s===0)return null;
+  let A2=0;
+  for(let i=0;i<n;i++){
+    const F1=Math.min(1-1e-12,Math.max(1e-12,ncdf((x[i]-m)/s)));
+    const F2=Math.min(1-1e-12,Math.max(1e-12,ncdf((x[n-1-i]-m)/s)));
+    A2+=(2*(i+1)-1)*(Math.log(F1)+Math.log(1-F2));
+  }
+  A2=-n-A2/n;
+  const As=A2*(1+0.75/n+2.25/(n*n));
+  let p;
+  if(As<0.2)p=1-Math.exp(-13.436+101.14*As-223.73*As*As);
+  else if(As<0.34)p=1-Math.exp(-8.318+42.796*As-59.938*As*As);
+  else if(As<0.6)p=Math.exp(0.9177-4.279*As-1.38*As*As);
+  else p=Math.exp(1.2937-5.709*As+0.0186*As*As);
+  return {A2:As,p:Math.min(1,Math.max(0,p)),n};
+}
+function ksLilliefors(v){
+  const x=[...v].sort((a,b)=>a-b),n=x.length;
+  const m=mean(x),s=sd(x);
+  if(s===0||n<4)return null;
+  let D=0;
+  for(let i=0;i<n;i++){
+    const F=ncdf((x[i]-m)/s);
+    D=Math.max(D,Math.abs(F-(i+1)/n),Math.abs(F-i/n));
+  }
+  // Dallal-Wilkinson / Lilliefors 近似
+  const nd=n<=100?n:100;
+  const Dc=D*(n<=100?1:Math.pow(n/100,0.49));
+  const pv=Math.exp(-7.01256*Dc*Dc*(nd+2.78019)+2.99587*Dc*Math.sqrt(nd+2.78019)-0.122119+0.974598/Math.sqrt(nd)+1.67997/nd);
+  return {D,p:Math.min(1,Math.max(0,pv)),n,approx:pv>0.1};
+}
+function normalitySuite(v){
+  return {shapiro:v.length>=3?shapiroWilk(v):null,dagostino:dagostino(v),ad:andersonDarling(v),ks:ksLilliefors(v),desc:describeFull(v)};
+}
+/* ---- 1標本検定 ---- */
+function tTest1(v,mu0){
+  const n=v.length,m=mean(v),s=sd(v),se=s/Math.sqrt(n);
+  const t=(m-mu0)/se,df=n-1,p=tPvalue(t,df),tc=tQuantile(0.975,df);
+  return {t,df,p,mean:m,diff:m-mu0,ciLo:m-tc*se,ciHi:m+tc*se,d:(m-mu0)/s,n};
+}
+function wilcoxon1(v,mu0){
+  const y=new Array(v.length).fill(mu0);
+  const r=wilcoxonSigned(v,y);
+  r.median=median(v);r.diff=median(v)-mu0;
+  return r;
+}
+function signTest(v,mu0){
+  let pos=0,neg=0;
+  for(const x of v){if(x>mu0)pos++;else if(x<mu0)neg++;}
+  const n=pos+neg;
+  let p=0;
+  const k=Math.min(pos,neg);
+  for(let i=0;i<=k;i++)p+=Math.exp(lgamma(n+1)-lgamma(i+1)-lgamma(n-i+1)-n*Math.LN2);
+  return {pos,neg,n,p:Math.min(1,2*p)};
+}
+function ks2sample(x,y){
+  const a=[...x].sort((p,q)=>p-q),b=[...y].sort((p,q)=>p-q);
+  const n1=a.length,n2=b.length;
+  let i=0,j=0,fa=0,fb=0,D=0;
+  while(i<n1&&j<n2){
+    const v=Math.min(a[i],b[j]);
+    while(i<n1&&a[i]===v)i++;
+    while(j<n2&&b[j]===v)j++;
+    fa=i/n1;fb=j/n2;
+    D=Math.max(D,Math.abs(fa-fb));
+  }
+  const ne=Math.sqrt(n1*n2/(n1+n2));
+  const lam=(ne+0.12+0.11/ne)*D;
+  let p=0;
+  for(let k=1;k<=100;k++)p+=2*Math.pow(-1,k-1)*Math.exp(-2*k*k*lam*lam);
+  return {D,p:Math.min(1,Math.max(0,p)),n1,n2};
+}
+/* ---- 分散の等質性 ---- */
+function fTestVar(x,y){
+  const v1=variance(x),v2=variance(y);
+  const F=v1>v2?v1/v2:v2/v1;
+  const d1=(v1>v2?x.length:y.length)-1,d2=(v1>v2?y.length:x.length)-1;
+  return {F,df1:d1,df2:d2,p:Math.min(1,2*fPvalue(F,d1,d2))};
+}
+function bartlett(groups){
+  const k=groups.length,N=sum(groups.map(g=>g.values.length));
+  const sp2=sum(groups.map(g=>(g.values.length-1)*variance(g.values)))/(N-k);
+  let num=(N-k)*Math.log(sp2);
+  for(const g of groups)num-=(g.values.length-1)*Math.log(variance(g.values));
+  let C=1;
+  for(const g of groups)C+=1/(g.values.length-1);
+  C=1+(C-1-1/(N-k))/(3*(k-1));
+  const chi2=num/C;
+  return {chi2,df:k-1,p:chi2Pvalue(chi2,k-1)};
+}
+function brownForsytheVar(groups){ // Levene(中央値版)
+  const gs=groups.map(g=>({label:g.label,values:g.values.map(v=>Math.abs(v-median(g.values)))}));
+  const a=anova1(gs);
+  return {F:a.F,df1:a.df1,df2:a.df2,p:a.p};
+}
+/* ---- 不等分散に強い一元配置 ---- */
+function welchAnova(groups){
+  const k=groups.length;
+  const w=groups.map(g=>g.values.length/variance(g.values));
+  const W=sum(w);
+  const mw=sum(groups.map((g,i)=>w[i]*mean(g.values)))/W;
+  let A=0;for(let i=0;i<k;i++)A+=w[i]*Math.pow(mean(groups[i].values)-mw,2);
+  A/=(k-1);
+  let B=0;for(let i=0;i<k;i++)B+=Math.pow(1-w[i]/W,2)/(groups[i].values.length-1);
+  B/=(k*k-1);
+  const F=A/(1+2*(k-2)*B);
+  const df2=1/(3*B);
+  return {F,df1:k-1,df2,p:fPvalue(F,k-1,df2)};
+}
+function brownForsytheAnova(groups){
+  const k=groups.length,N=sum(groups.map(g=>g.values.length));
+  const all=groups.flatMap(g=>g.values),gm=mean(all);
+  let ssb=0;for(const g of groups)ssb+=g.values.length*Math.pow(mean(g.values)-gm,2);
+  const terms=groups.map(g=>(1-g.values.length/N)*variance(g.values));
+  const den=sum(terms);
+  const F=ssb/den;
+  const c=terms.map(t=>t/den);
+  let inv=0;for(let i=0;i<k;i++)inv+=c[i]*c[i]/(groups[i].values.length-1);
+  const df2=1/inv;
+  return {F,df1:k-1,df2,p:fPvalue(F,k-1,df2)};
+}
+/* ---- 一元配置ANOVA（分散分析表つき） ---- */
+function anovaTable1(groups){
+  const k=groups.length;
+  const all=groups.flatMap(g=>g.values);
+  const N=all.length,gm=mean(all);
+  let ssb=0,ssw=0;
+  for(const g of groups){
+    const m=mean(g.values);
+    ssb+=g.values.length*(m-gm)*(m-gm);
+    for(const v of g.values)ssw+=(v-m)*(v-m);
+  }
+  const df1=k-1,df2=N-k;
+  const ms1=ssb/df1,ms2=ssw/df2;
+  const F=ms1/ms2;
+  return {ssb,ssw,sst:ssb+ssw,df1,df2,ms1,ms2,F,p:fPvalue(F,df1,df2),
+    eta2:ssb/(ssb+ssw),omega2:(ssb-df1*ms2)/(ssb+ssw+ms2),N,k,gm,mse:ms2};
+}
+/* ---- 反復測定一元配置ANOVA（行=被験者） ---- */
+function anovaRM1(rows){ // rows: [[v1..vk],...] 欠測なし
+  const n=rows.length,k=rows[0].length;
+  const all=rows.flat(),gm=mean(all);
+  const colM=[];for(let j=0;j<k;j++)colM.push(mean(rows.map(r=>r[j])));
+  const rowM=rows.map(r=>mean(r));
+  let sst=0;for(const v of all)sst+=(v-gm)*(v-gm);
+  let ssTreat=0;for(let j=0;j<k;j++)ssTreat+=n*Math.pow(colM[j]-gm,2);
+  let ssSubj=0;for(let i=0;i<n;i++)ssSubj+=k*Math.pow(rowM[i]-gm,2);
+  const ssErr=sst-ssTreat-ssSubj;
+  const dfT=k-1,dfS=n-1,dfE=(n-1)*(k-1);
+  const msT=ssTreat/dfT,msE=ssErr/dfE,msS=ssSubj/dfS;
+  const F=msT/msE;
+  // Geisser-Greenhouse ε
+  const S=Array.from({length:k},()=>new Array(k).fill(0));
+  for(let a=0;a<k;a++)for(let b=0;b<k;b++){
+    let c=0;for(let i=0;i<n;i++)c+=(rows[i][a]-colM[a])*(rows[i][b]-colM[b]);
+    S[a][b]=c/(n-1);
+  }
+  let gmS=0;for(let a=0;a<k;a++)for(let b=0;b<k;b++)gmS+=S[a][b];gmS/=k*k;
+  const rowMs=[];for(let a=0;a<k;a++){let s2=0;for(let b=0;b<k;b++)s2+=S[a][b];rowMs.push(s2/k);}
+  let diagM=0;for(let a=0;a<k;a++)diagM+=S[a][a];diagM/=k;
+  let sumSq=0;for(let a=0;a<k;a++)for(let b=0;b<k;b++)sumSq+=S[a][b]*S[a][b];
+  let sumRowSq=0;for(let a=0;a<k;a++)sumRowSq+=rowMs[a]*rowMs[a];
+  const eps=(k*k*Math.pow(diagM-gmS,2))/((k-1)*(sumSq-2*k*sumRowSq+k*k*gmS*gmS));
+  const epsGG=Math.min(1,Math.max(1/(k-1),eps));
+  const epsHF=Math.min(1,(n*(k-1)*epsGG-2)/((k-1)*(n-1-(k-1)*epsGG)));
+  return {ssTreat,ssSubj,ssErr,sst,dfT,dfS,dfE,msT,msS,msE,F,p:fPvalue(F,dfT,dfE),
+    pGG:fPvalue(F,dfT*epsGG,dfE*epsGG),pHF:fPvalue(F,dfT*epsHF,dfE*epsHF),
+    epsGG,epsHF,n,k,colM,rowM,mse:msE,
+    // 被験者間のばらつきが有意かどうか
+    Fsubj:msS/msE,pSubj:fPvalue(msS/msE,dfS,dfE)};
+}
+/* ---- Friedman検定 ---- */
+function friedman(rows){
+  const n=rows.length,k=rows[0].length;
+  const R=new Array(k).fill(0);
+  let tieCorr=0;
+  for(const r of rows){
+    const {ranks,ties}=ranksAvg(r);
+    for(let j=0;j<k;j++)R[j]+=ranks[j];
+    for(const t of ties)tieCorr+=t*t*t-t;
+  }
+  let chi2=0;for(let j=0;j<k;j++)chi2+=R[j]*R[j];
+  chi2=12/(n*k*(k+1))*chi2-3*n*(k+1);
+  const den=1-tieCorr/(n*(k*k*k-k));
+  if(den>0)chi2/=den;
+  const df=k-1;
+  return {chi2,df,p:chi2Pvalue(chi2,df),R,meanRanks:R.map(r=>r/n),n,k,W:chi2/(n*(k-1))};
+}
+function dunnRM(rows,labels){ // Friedman事後（Dunn）
+  const n=rows.length,k=rows[0].length;
+  const R=new Array(k).fill(0);
+  for(const r of rows){const {ranks}=ranksAvg(r);for(let j=0;j<k;j++)R[j]+=ranks[j];}
+  const se=Math.sqrt(k*(k+1)/(6*n));
+  const out=[];
+  for(let i=0;i<k;i++)for(let j=i+1;j<k;j++){
+    const z=(R[i]/n-R[j]/n)/se;
+    out.push({a:labels[i],b:labels[j],diff:R[i]/n-R[j]/n,z,p:2*(1-ncdf(Math.abs(z)))});
+  }
+  const adj=bonferroni(out.map(o=>o.p));
+  out.forEach((o,i)=>o.pAdj=Math.min(1,adj[i]));
+  return out;
+}
+/* ---- 多重比較（対応なし：MSEを共有） ---- */
+function multiCompare(groups,mse,dfE,method,ctrlIdx,ci=0.95){
+  const k=groups.length;
+  const ms=groups.map(g=>mean(g.values)),ns=groups.map(g=>g.values.length);
+  const pairs=[];
+  const push=(i,j)=>{
+    const diff=ms[i]-ms[j];
+    const se=Math.sqrt(mse*(1/ns[i]+1/ns[j]));
+    pairs.push({i,j,a:groups[i].label,b:groups[j].label,diff,se,t:diff/se});
+  };
+  if(method==="dunnett"){for(let i=0;i<k;i++)if(i!==ctrlIdx)push(i,ctrlIdx);}
+  else{for(let i=0;i<k;i++)for(let j=i+1;j<k;j++)push(i,j);}
+  const m=pairs.length;
+  const alpha=1-ci;
+  if(method==="tukey"){
+    for(const p of pairs){
+      const q=Math.abs(p.diff)/Math.sqrt(mse/2*(1/ns[p.i]+1/ns[p.j]));
+      p.q=q;p.pAdj=Math.min(1,ptukeyP(q,k,dfE));
+      const qc=qtukey(ci,k,dfE);
+      const half=qc*Math.sqrt(mse/2*(1/ns[p.i]+1/ns[p.j]));
+      p.ciLo=p.diff-half;p.ciHi=p.diff+half;
+    }
+  }else if(method==="dunnett"){
+    const lam=pairs.map(p=>Math.sqrt(ns[p.i]/(ns[p.i]+ns[ctrlIdx])));
+    for(const p of pairs)p.pAdj=Math.min(1,pdunnett(Math.abs(p.t),lam,dfE,true));
+    // 臨界値を二分法で
+    let lo=0,hi=12;
+    for(let it=0;it<40;it++){const mid=(lo+hi)/2;if(pdunnett(mid,lam,dfE,true)>alpha)lo=mid;else hi=mid;}
+    const dc=(lo+hi)/2;
+    for(const p of pairs){p.ciLo=p.diff-dc*p.se;p.ciHi=p.diff+dc*p.se;p.crit=dc;}
+  }else{
+    for(const p of pairs){
+      p.pRaw=tPvalue(p.t,dfE);
+      if(method==="bonferroni")p.pAdj=Math.min(1,p.pRaw*m);
+      else if(method==="sidak")p.pAdj=1-Math.pow(1-p.pRaw,m);
+      else if(method==="holm")p.pAdj=null;
+      else if(method==="fdr")p.pAdj=null;
+      else p.pAdj=p.pRaw; // 無補正(Fisher LSD)
+    }
+    if(method==="holm"){const adj=holm(pairs.map(p=>p.pRaw));pairs.forEach((p,i)=>p.pAdj=adj[i]);}
+    if(method==="fdr"){const adj=bhFDR(pairs.map(p=>p.pRaw));pairs.forEach((p,i)=>p.pAdj=adj[i]);}
+    const per=(method==="bonferroni")?alpha/m:(method==="sidak")?1-Math.pow(1-alpha,1/m):alpha;
+    const tc=tQuantile(1-per/2,dfE);
+    for(const p of pairs){p.ciLo=p.diff-tc*p.se;p.ciHi=p.diff+tc*p.se;}
+  }
+  return pairs;
+}
+/* ---- 多重比較（対応あり：ペアごとの差） ---- */
+function multiComparePaired(rows,labels,method,ctrlIdx,ci=0.95){
+  const k=rows[0].length,n=rows.length;
+  const pairs=[];
+  const push=(i,j)=>{
+    const d=rows.map(r=>r[i]-r[j]);
+    const md=mean(d),se=sd(d)/Math.sqrt(n);
+    pairs.push({i,j,a:labels[i],b:labels[j],diff:md,se,t:md/se,df:n-1});
+  };
+  if(method==="dunnett"){for(let i=0;i<k;i++)if(i!==ctrlIdx)push(i,ctrlIdx);}
+  else{for(let i=0;i<k;i++)for(let j=i+1;j<k;j++)push(i,j);}
+  const m=pairs.length,alpha=1-ci;
+  for(const p of pairs)p.pRaw=tPvalue(p.t,p.df);
+  if(method==="holm"){const a=holm(pairs.map(p=>p.pRaw));pairs.forEach((p,i)=>p.pAdj=a[i]);}
+  else if(method==="fdr"){const a=bhFDR(pairs.map(p=>p.pRaw));pairs.forEach((p,i)=>p.pAdj=a[i]);}
+  else if(method==="bonferroni")pairs.forEach(p=>p.pAdj=Math.min(1,p.pRaw*m));
+  else if(method==="sidak"||method==="tukey"||method==="dunnett")pairs.forEach(p=>p.pAdj=1-Math.pow(1-p.pRaw,m));
+  else pairs.forEach(p=>p.pAdj=p.pRaw);
+  const per=(method==="bonferroni")?alpha/m:(method==="none")?alpha:1-Math.pow(1-alpha,1/m);
+  pairs.forEach(p=>{const tc=tQuantile(1-per/2,p.df);p.ciLo=p.diff-tc*p.se;p.ciHi=p.diff+tc*p.se;});
+  return pairs;
+}
+/* ---- 二元配置ANOVA（TypeIII・効果コーディング回帰） ---- */
+function anova2(cells,rowLabels,colLabels){
+  // cells[r][c] = 値の配列
+  const R=rowLabels.length,C=colLabels.length;
+  const y=[],design=[];
+  const hasRep=cells.some(row=>row.some(c=>c.length>1));
+  const build=(r,c)=>{
+    const v=[1];
+    for(let i=0;i<R-1;i++)v.push(r===i?1:(r===R-1?-1:0));
+    for(let j=0;j<C-1;j++)v.push(c===j?1:(c===C-1?-1:0));
+    if(hasRep||true){
+      for(let i=0;i<R-1;i++)for(let j=0;j<C-1;j++){
+        const a=r===i?1:(r===R-1?-1:0),b=c===j?1:(c===C-1?-1:0);
+        v.push(a*b);
+      }
+    }
+    return v;
+  };
+  for(let r=0;r<R;r++)for(let c=0;c<C;c++)for(const val of cells[r][c]){y.push(val);design.push(build(r,c));}
+  const N=y.length;
+  const nRow=R-1,nCol=C-1,nInt=(R-1)*(C-1);
+  const idxRow=[],idxCol=[],idxInt=[];
+  for(let i=0;i<nRow;i++)idxRow.push(1+i);
+  for(let j=0;j<nCol;j++)idxCol.push(1+nRow+j);
+  for(let t=0;t<nInt;t++)idxInt.push(1+nRow+nCol+t);
+  const sseOf=(drop)=>{
+    const keep=design[0].map((_,i)=>i).filter(i=>!drop.includes(i));
+    const X=design.map(row=>keep.map(i=>row[i]));
+    const r=linReg(X,y,keep.map(String));
+    if(r.error)return null;
+    return sum(r.resid.map(e=>e*e));
+  };
+  const full=sseOf([]);
+  if(full===null)return {error:"デザイン行列が特異です。空のセルがないか確認してください。"};
+  const dfE=N-design[0].length;
+  if(dfE<=0)return {error:"反復（サブ列）が不足しているため、交互作用を含むモデルを当てはめられません。"};
+  const mse=full/dfE;
+  const term=(idx,df)=>{
+    const s=sseOf(idx);
+    if(s===null)return null;
+    const ss=s-full;
+    const F=(ss/df)/mse;
+    return {ss,df,ms:ss/df,F,p:fPvalue(F,df,dfE)};
+  };
+  const rowT=term(idxRow,nRow),colT=term(idxCol,nCol),intT=nInt>0?term(idxInt,nInt):null;
+  const gm=mean(y);
+  let sst=0;for(const v of y)sst+=(v-gm)*(v-gm);
+  const cellMeans=cells.map(row=>row.map(c=>c.length?mean(c):NaN));
+  const cellN=cells.map(row=>row.map(c=>c.length));
+  return {row:rowT,col:colT,inter:intT,resid:{ss:full,df:dfE,ms:mse},total:{ss:sst,df:N-1},
+    mse,dfE,N,R,C,rowLabels,colLabels,cellMeans,cellN,cells,
+    balanced:cellN.every(r=>r.every(v=>v===cellN[0][0]))};
+}
+/* ---- 分割プロット型 二元配置反復測定ANOVA ---- */
+function anova2RM(subjects,betweenLabels,withinLabels){
+  // subjects: [{group:betweenIdx, values:[within毎の値]}]
+  const a=betweenLabels.length,b=withinLabels.length;
+  const byG=Array.from({length:a},()=>[]);
+  subjects.forEach(s=>byG[s.group].push(s));
+  if(byG.some(g=>g.length<1))return {error:"すべての群に被験者が必要です。"};
+  const all=subjects.flatMap(s=>s.values);
+  const G=mean(all),N=all.length;
+  let sst=0;for(const v of all)sst+=(v-G)*(v-G);
+  const Am=byG.map(g=>mean(g.flatMap(s=>s.values)));
+  const Bm=[];for(let j=0;j<b;j++)Bm.push(mean(subjects.map(s=>s.values[j])));
+  let ssA=0;byG.forEach((g,i)=>{ssA+=g.length*b*Math.pow(Am[i]-G,2);});
+  let ssB=0;for(let j=0;j<b;j++)ssB+=subjects.length*Math.pow(Bm[j]-G,2);
+  let ssSubj=0;
+  byG.forEach((g,i)=>{g.forEach(s=>{ssSubj+=b*Math.pow(mean(s.values)-Am[i],2);});});
+  let ssAB=0;
+  for(let i=0;i<a;i++)for(let j=0;j<b;j++){
+    const cm=mean(byG[i].map(s=>s.values[j]));
+    ssAB+=byG[i].length*Math.pow(cm-Am[i]-Bm[j]+G,2);
+  }
+  const ssErr=sst-ssA-ssB-ssAB-ssSubj;
+  const dfA=a-1,dfSubj=subjects.length-a,dfB=b-1,dfAB=(a-1)*(b-1),dfErr=dfSubj*(b-1);
+  const msA=ssA/dfA,msSubj=ssSubj/dfSubj,msB=ssB/dfB,msAB=ssAB/dfAB,msErr=ssErr/dfErr;
+  return {
+    between:{name:"群間",ss:ssA,df:dfA,ms:msA,F:msA/msSubj,p:fPvalue(msA/msSubj,dfA,dfSubj)},
+    subj:{name:"被験者(群内)",ss:ssSubj,df:dfSubj,ms:msSubj},
+    within:{name:"反復要因",ss:ssB,df:dfB,ms:msB,F:msB/msErr,p:fPvalue(msB/msErr,dfB,dfErr)},
+    inter:{name:"交互作用",ss:ssAB,df:dfAB,ms:msAB,F:msAB/msErr,p:fPvalue(msAB/msErr,dfAB,dfErr)},
+    err:{name:"残差",ss:ssErr,df:dfErr,ms:msErr},
+    total:{ss:sst,df:N-1},nSubj:subjects.length,a,b,mse:msErr,betweenLabels,withinLabels
+  };
+}
+/* ---- 外れ値検定 ---- */
+function grubbs(v){
+  const n=v.length;
+  if(n<3)return null;
+  const m=mean(v),s=sd(v);
+  if(s===0)return null;
+  let gi=0,G=0;
+  v.forEach((x,i)=>{const g=Math.abs(x-m)/s;if(g>G){G=g;gi=i;}});
+  const t2=G*G*n*(n-2)/((n-1)*(n-1)-n*G*G);
+  const t=Math.sqrt(Math.max(0,t2));
+  const p=Math.min(1,n*tPvalue(t,n-2));
+  return {G,p,idx:gi,value:v[gi],n};
+}
+function routOutliers(v,Q=0.01){
+  const n=v.length;
+  if(n<4)return {outliers:[],n};
+  const med=median(v);
+  const res=v.map(x=>Math.abs(x-med));
+  const rsd=quantile(res,0.6827)*n/Math.max(1,n-1);
+  if(!(rsd>0))return {outliers:[],n};
+  const t=v.map(x=>Math.abs(x-med)/rsd);
+  const ps=t.map(tt=>tPvalue(tt,Math.max(1,n-1)));
+  const order=ps.map((p,i)=>[p,i]).sort((x,y)=>x[0]-y[0]);
+  const out=[];
+  let maxK=0;
+  order.forEach(([p,i],k)=>{if(p<= (k+1)/n*Q)maxK=k+1;});
+  for(let k=0;k<maxK;k++)out.push({idx:order[k][1],value:v[order[k][1]],p:order[k][0],t:t[order[k][1]]});
+  return {outliers:out,n,rsd,med,Q};
+}
+/* ---- 分割表の追加検定 ---- */
+function chi2Trend(table){ // 2xC のCochran-Armitage傾向検定（列スコア=0,1,2..）
+  const C=table[0].length;
+  const scores=Array.from({length:C},(_,j)=>j);
+  const n1=table[0],n2=table[1];
+  const Ncol=n1.map((v,j)=>v+n2[j]);
+  const N=sum(Ncol),R1=sum(n1);
+  const p1=R1/N;
+  let T=0;for(let j=0;j<C;j++)T+=scores[j]*n1[j];
+  let ES=0;for(let j=0;j<C;j++)ES+=scores[j]*Ncol[j];
+  const ET=p1*ES;
+  let s1=0,s2=0;
+  for(let j=0;j<C;j++){s1+=Ncol[j]*scores[j]*scores[j];s2+=Ncol[j]*scores[j];}
+  const VT=p1*(1-p1)*(s1-s2*s2/N)*N/(N-1);
+  const z=(T-ET)/Math.sqrt(VT);
+  return {chi2:z*z,z,df:1,p:chi2Pvalue(z*z,1)};
+}
+function mcnemar(a,b,c,d){ // 対応のある2x2（b,cが不一致セル）
+  const n=b+c;
+  if(n===0)return {p:1,chi2:0,df:1,n:0};
+  const chi2=Math.pow(Math.abs(b-c)-1,2)/n;
+  let pExact=0;
+  const k=Math.min(b,c);
+  for(let i=0;i<=k;i++)pExact+=Math.exp(lgamma(n+1)-lgamma(i+1)-lgamma(n-i+1)-n*Math.LN2);
+  pExact=Math.min(1,2*pExact);
+  const or=c>0?b/c:Infinity;
+  return {chi2,df:1,p:chi2Pvalue(chi2,1),pExact,or,b,c,n};
+}
+function diagnostic2x2(tp,fp,fn,tn){
+  const wilson=(k,n)=>{
+    if(n===0)return [NaN,NaN];
+    const z=1.959963984540054,p=k/n;
+    const den=1+z*z/n,c=(p+z*z/(2*n))/den;
+    const h=z*Math.sqrt(p*(1-p)/n+z*z/(4*n*n))/den;
+    return [Math.max(0,c-h),Math.min(1,c+h)];
+  };
+  const sens=tp/(tp+fn),spec=tn/(tn+fp);
+  const ppv=tp/(tp+fp),npv=tn/(tn+fn);
+  const prev=(tp+fn)/(tp+fp+fn+tn);
+  return {sens,spec,ppv,npv,prev,acc:(tp+tn)/(tp+fp+fn+tn),
+    lrPos:sens/(1-spec),lrNeg:(1-sens)/spec,
+    sensCI:wilson(tp,tp+fn),specCI:wilson(tn,tn+fp),ppvCI:wilson(tp,tp+fp),npvCI:wilson(tn,tn+fn),
+    youden:sens+spec-1};
+}
+function riskDiff(a,b,c,d){
+  const p1=a/(a+b),p2=c/(c+d);
+  const se=Math.sqrt(p1*(1-p1)/(a+b)+p2*(1-p2)/(c+d));
+  const z=1.959963984540054;
+  return {rd:p1-p2,lo:p1-p2-z*se,hi:p1-p2+z*se,nnt:1/Math.abs(p1-p2)};
+}
+
+/* ---- 生存解析（Prism仕様の拡張） ---- */
+function kmFull(times,events,ci=0.95){
+  const n=times.length;
+  const ord=times.map((t,i)=>i).sort((a,b)=>times[a]-times[b]);
+  const T=ord.map(i=>times[i]),E=ord.map(i=>events[i]?1:0);
+  const steps=[{t:0,s:1,lo:1,hi:1,atRisk:n,d:0,c:0}];
+  let s=1,atRisk=n,cum=0,i=0;
+  const censors=[],table=[];
+  const z=normInv(1-(1-ci)/2);
+  while(i<n){
+    const t=T[i];let d=0,c=0;
+    while(i<n&&T[i]===t){if(E[i])d++;else c++;i++;}
+    const nAt=atRisk;
+    if(d>0){
+      s*=(nAt-d)/nAt;
+      cum+=d/(nAt*(nAt-d));
+      const seLog=Math.sqrt(cum);
+      let lo=NaN,hi=NaN;
+      if(s>0&&s<1){ // log-log変換による信頼区間
+        const ls=Math.log(-Math.log(s));
+        const se2=seLog/Math.abs(Math.log(s));
+        lo=Math.pow(s,Math.exp(z*se2));hi=Math.pow(s,Math.exp(-z*se2));
+      }else if(s===1){lo=1;hi=1;}else{lo=0;hi=0;}
+      steps.push({t,s,lo,hi,atRisk:nAt,d,c,se:s*seLog});
+    }
+    if(c>0)censors.push({t,s});
+    table.push({t,atRisk:nAt,d,c,s});
+    atRisk-=d+c;
+  }
+  let med=null,medLo=null,medHi=null;
+  for(const st of steps)if(st.t>0&&st.s<=0.5){med=st.t;break;}
+  for(const st of steps)if(st.t>0&&st.hi<=0.5){medLo=st.t;break;}
+  for(const st of steps)if(st.t>0&&st.lo<=0.5){medHi=st.t;break;}
+  const surviveAt=(t)=>{let cur=1;for(const st of steps)if(st.t<=t)cur=st.s;return cur;};
+  const ciAt=(t)=>{let cur=[1,1];for(const st of steps)if(st.t<=t)cur=[st.lo,st.hi];return cur;};
+  const atRiskAtT=(t)=>{let c2=0;for(const x of times)if(x>=t)c2++;return c2;};
+  return {steps,censors,table,median:med,medianLo:medLo,medianHi:medHi,n,
+    events:sum(E),censored:n-sum(E),maxT:Math.max(...times),surviveAt,ciAt,atRiskAtT,ci};
+}
+function survivalCompare(groups){ // groups:[{label,times,events}]
+  const k=groups.length;
+  const evTimes=[...new Set(groups.flatMap(g=>g.times.filter((t,i)=>g.events[i])))].sort((a,b)=>a-b);
+  const O=new Array(k).fill(0),E=new Array(k).fill(0);
+  const V=Array.from({length:k},()=>new Array(k).fill(0));
+  let gehanNum=0,gehanVar=0;
+  const OW=new Array(k).fill(0),EW=new Array(k).fill(0);
+  const VW=Array.from({length:k},()=>new Array(k).fill(0));
+  const atR=(g,t)=>{let c=0;for(const x of g.times)if(x>=t)c++;return c;};
+  for(const t of evTimes){
+    const nAt=groups.map(g=>atR(g,t));
+    const N=sum(nAt);
+    if(N<=1)continue;
+    const dAt=groups.map(g=>{let d=0;for(let i=0;i<g.times.length;i++)if(g.times[i]===t&&g.events[i])d++;return d;});
+    const D=sum(dAt);
+    if(D===0)continue;
+    const w=N; // Gehan-Breslow重み
+    for(let a=0;a<k;a++){
+      O[a]+=dAt[a];E[a]+=D*nAt[a]/N;
+      OW[a]+=w*dAt[a];EW[a]+=w*D*nAt[a]/N;
+      for(let b=0;b<k;b++){
+        const del=a===b?1:0;
+        const v=D*(nAt[a]/N)*(del-nAt[b]/N)*(N-D)/(N-1);
+        V[a][b]+=v;VW[a][b]+=w*w*v;
+      }
+    }
+  }
+  const chiOf=(Oa,Ea,Va)=>{
+    const d=Oa.map((o,g)=>o-Ea[g]).slice(0,k-1);
+    const inv=matInv(Va.slice(0,k-1).map(r=>r.slice(0,k-1)));
+    let c=0;
+    if(inv)for(let a2=0;a2<k-1;a2++)for(let b2=0;b2<k-1;b2++)c+=d[a2]*inv[a2][b2]*d[b2];
+    return c;
+  };
+  const chi2=chiOf(O,E,V),chi2W=chiOf(OW,EW,VW);
+  const df=k-1;
+  // 傾向検定（スコア=0,1,2,...）
+  let trendZ=NaN,trendP=NaN;
+  if(k>2){
+    const sc=groups.map((_,i)=>i);
+    let num=0;for(let a=0;a<k;a++)num+=sc[a]*(O[a]-E[a]);
+    let den=0;for(let a=0;a<k;a++)for(let b=0;b<k;b++)den+=sc[a]*sc[b]*V[a][b];
+    trendZ=num/Math.sqrt(den);trendP=2*(1-ncdf(Math.abs(trendZ)));
+  }
+  let hr=null;
+  if(k===2){
+    const r1=O[0]/E[0],r2=O[1]/E[1];
+    const HR=r1/r2;
+    const se=Math.sqrt(1/E[0]+1/E[1]);
+    const zc=1.959963984540054;
+    const mh=Math.exp((O[0]-E[0])/V[0][0]);
+    const semh=1/Math.sqrt(V[0][0]);
+    hr={hr:HR,lo:Math.exp(Math.log(HR)-zc*se),hi:Math.exp(Math.log(HR)+zc*se),
+        mh,mhLo:Math.exp(Math.log(mh)-zc*semh),mhHi:Math.exp(Math.log(mh)+zc*semh)};
+  }
+  return {chi2,df,p:chi2Pvalue(chi2,df),chi2Gehan:chi2W,pGehan:chi2Pvalue(chi2W,df),
+    O,E,hr,trendZ,trendP,k};
+}
+/* ---- 直線回帰（Prism仕様） ---- */
+function linFit(x,y,{throughOrigin=false,ci=0.95}={}){
+  const n=x.length;
+  if(n<(throughOrigin?2:3))return {error:"点が不足しています（最低3点、原点通過なら2点）。"};
+  const mx=mean(x),my=mean(y);
+  let sxx=0,sxy=0,syy=0;
+  for(let i=0;i<n;i++){sxx+=(x[i]-mx)*(x[i]-mx);sxy+=(x[i]-mx)*(y[i]-my);syy+=(y[i]-my)*(y[i]-my);}
+  let slope,intercept,df,sse,seSlope,seInt;
+  if(throughOrigin){
+    let sx2=0,sxy0=0;
+    for(let i=0;i<n;i++){sx2+=x[i]*x[i];sxy0+=x[i]*y[i];}
+    slope=sxy0/sx2;intercept=0;df=n-1;
+    sse=0;for(let i=0;i<n;i++)sse+=Math.pow(y[i]-slope*x[i],2);
+    seSlope=Math.sqrt(sse/df/sx2);seInt=NaN;
+  }else{
+    slope=sxy/sxx;intercept=my-slope*mx;df=n-2;
+    sse=0;for(let i=0;i<n;i++)sse+=Math.pow(y[i]-(intercept+slope*x[i]),2);
+    seSlope=Math.sqrt(sse/df/sxx);
+    seInt=Math.sqrt(sse/df*(1/n+mx*mx/sxx));
+  }
+  const s2=sse/df,syx=Math.sqrt(s2);
+  const tc=tQuantile(1-(1-ci)/2,df);
+  const t=slope/seSlope,p=tPvalue(t,df);
+  const r2=throughOrigin?1-sse/sum(y.map(v=>v*v)):1-sse/syy;
+  const resid=y.map((v,i)=>v-(intercept+slope*x[i]));
+  // Runs test（直線からの系統的ずれ）
+  const ord=x.map((v,i)=>i).sort((a,b)=>x[a]-x[b]);
+  const signs=ord.map(i=>resid[i]>=0?1:-1);
+  let runs=1;for(let i=1;i<signs.length;i++)if(signs[i]!==signs[i-1])runs++;
+  const np=signs.filter(s=>s>0).length,nn=signs.length-np;
+  let runsP=NaN,runsZ=NaN;
+  if(np>0&&nn>0){
+    const mu=2*np*nn/(np+nn)+1;
+    const va=2*np*nn*(2*np*nn-np-nn)/(Math.pow(np+nn,2)*(np+nn-1));
+    runsZ=(runs-mu)/Math.sqrt(va);
+    runsP=va>0?ncdf(runsZ):NaN; // 片側（runsが少ない＝曲線的）
+  }
+  const band=(xv,pred)=>{
+    const c=throughOrigin?xv*xv/sum(x.map(v=>v*v)):1/n+Math.pow(xv-mx,2)/sxx;
+    return tc*syx*Math.sqrt((pred?1:0)+c);
+  };
+  return {slope,intercept,seSlope,seInt,df,n,sse,syx,r2,t,p,
+    slopeLo:slope-tc*seSlope,slopeHi:slope+tc*seSlope,
+    intLo:intercept-tc*seInt,intHi:intercept+tc*seInt,
+    xIntercept:slope!==0?-intercept/slope:NaN,invSlope:1/slope,
+    resid,band,runs,runsZ,runsP,nPos:np,nNeg:nn,sxx,mx,my,ci,throughOrigin,
+    predict:(xv)=>intercept+slope*xv};
+}
+function compareLines(datasets){ // ANCOVA：傾き・切片の比較
+  const k=datasets.length;
+  const fits=datasets.map(d=>linFit(d.x,d.y));
+  if(fits.some(f=>f.error))return {error:"各データセットに3点以上必要です。"};
+  const N=sum(datasets.map(d=>d.x.length));
+  const ss1=sum(fits.map(f=>f.sse)),df1=N-2*k;
+  // 共通傾きモデル
+  const sxxT=sum(datasets.map(d=>{const m=mean(d.x);return sum(d.x.map(v=>(v-m)*(v-m)));}));
+  const sxyT=sum(datasets.map(d=>{const mx=mean(d.x),my=mean(d.y);let s=0;for(let i=0;i<d.x.length;i++)s+=(d.x[i]-mx)*(d.y[i]-my);return s;}));
+  const bc=sxyT/sxxT;
+  let ss2=0;
+  for(const d of datasets){const mx=mean(d.x),my=mean(d.y);const a=my-bc*mx;for(let i=0;i<d.x.length;i++)ss2+=Math.pow(d.y[i]-(a+bc*d.x[i]),2);}
+  const df2=N-k-1;
+  // 単一直線モデル
+  const allX=datasets.flatMap(d=>d.x),allY=datasets.flatMap(d=>d.y);
+  const one=linFit(allX,allY);
+  const ss3=one.sse,df3=N-2;
+  const Fslope=((ss2-ss1)/(df2-df1))/(ss1/df1);
+  const pSlope=fPvalue(Fslope,df2-df1,df1);
+  const Fint=((ss3-ss2)/(df3-df2))/(ss2/df2);
+  const pInt=fPvalue(Fint,df3-df2,df2);
+  return {fits,Fslope,pSlope,dfSlopeN:df2-df1,dfSlopeD:df1,
+    Fint,pInt,dfIntN:df3-df2,dfIntD:df2,pooledSlope:bc,one,k};
+}
+function demingFit(x,y,lambda=1){
+  const n=x.length,mx=mean(x),my=mean(y);
+  let sxx=0,syy=0,sxy=0;
+  for(let i=0;i<n;i++){sxx+=(x[i]-mx)**2;syy+=(y[i]-my)**2;sxy+=(x[i]-mx)*(y[i]-my);}
+  sxx/=(n-1);syy/=(n-1);sxy/=(n-1);
+  const b=((syy-lambda*sxx)+Math.sqrt(Math.pow(syy-lambda*sxx,2)+4*lambda*sxy*sxy))/(2*sxy);
+  const a=my-b*mx;
+  return {slope:b,intercept:a,lambda,n,predict:(xv)=>a+b*xv};
+}
+/* ---- 数式パーサ（カスタム式フィット用） ---- */
+const MATHFN={exp:Math.exp,ln:Math.log,log:(v)=>Math.log10(v),log10:(v)=>Math.log10(v),log2:Math.log2,
+  sqrt:Math.sqrt,abs:Math.abs,sin:Math.sin,cos:Math.cos,tan:Math.tan,asin:Math.asin,acos:Math.acos,
+  atan:Math.atan,sinh:Math.sinh,cosh:Math.cosh,tanh:Math.tanh,sign:Math.sign,floor:Math.floor,
+  round:Math.round,ceil:Math.ceil};
+function compileExpr(src,vars){
+  let i=0;const s=src.replace(/\s+/g,"");
+  const peek=()=>s[i];
+  const eat=(c)=>{if(s[i]===c){i++;return true;}return false;};
+  function parseE(){ // 加減
+    let node=parseT();
+    for(;;){
+      if(eat("+")){const r=parseT(),l=node;node=(e)=>l(e)+r(e);}
+      else if(eat("-")){const r=parseT(),l=node;node=(e)=>l(e)-r(e);}
+      else return node;
+    }
+  }
+  function parseT(){ // 乗除
+    let node=parseP();
+    for(;;){
+      if(eat("*")){const r=parseP(),l=node;node=(e)=>l(e)*r(e);}
+      else if(eat("/")){const r=parseP(),l=node;node=(e)=>l(e)/r(e);}
+      else return node;
+    }
+  }
+  function parseP(){ // 冪（右結合）
+    const base=parseU();
+    if(eat("^")){const ex=parseP();return (e)=>Math.pow(base(e),ex(e));}
+    return base;
+  }
+  function parseU(){
+    if(eat("-")){const v=parseU();return (e)=>-v(e);}
+    if(eat("+"))return parseU();
+    return parseA();
+  }
+  function parseA(){
+    if(eat("(")){const v=parseE();if(!eat(")"))throw new Error("閉じ括弧がありません");return v;}
+    const m=/^[A-Za-z_][A-Za-z0-9_]*/.exec(s.slice(i));
+    if(m){
+      const name=m[0];i+=name.length;
+      if(peek()==="("){
+        i++;const args=[];
+        if(peek()!==")"){do{args.push(parseE());}while(eat(","));}
+        if(!eat(")"))throw new Error("関数の閉じ括弧がありません");
+        const fn=MATHFN[name.toLowerCase()];
+        if(fn)return (e)=>fn(...args.map(a=>a(e)));
+        if(name.toLowerCase()==="pow")return (e)=>Math.pow(args[0](e),args[1](e));
+        if(name.toLowerCase()==="min")return (e)=>Math.min(...args.map(a=>a(e)));
+        if(name.toLowerCase()==="max")return (e)=>Math.max(...args.map(a=>a(e)));
+        throw new Error("未知の関数: "+name);
+      }
+      const lower=name.toLowerCase();
+      if(lower==="pi")return ()=>Math.PI;
+      if(lower==="e")return ()=>Math.E;
+      const idx=vars.indexOf(name);
+      if(idx<0)throw new Error("未知の変数: "+name);
+      return (e)=>e[idx];
+    }
+    const num=/^\d+(\.\d+)?([eE][+-]?\d+)?/.exec(s.slice(i));
+    if(num){i+=num[0].length;const v=parseFloat(num[0]);return ()=>v;}
+    throw new Error("式を解釈できません: …"+s.slice(i,i+10));
+  }
+  const f=parseE();
+  if(i<s.length)throw new Error("余分な文字: "+s.slice(i));
+  return f;
+}
+/* ---- 非線形回帰（Levenberg-Marquardt） ---- */
+function lmFit(x,y,fn,p0,opts={}){
+  const {maxIter=400,tol=1e-10,weights=null,fixed=null,ci=0.95}=opts;
+  const n=x.length,np=p0.length;
+  let p=[...p0];
+  const free=[];for(let j=0;j<np;j++)if(!(fixed&&fixed[j]!==null&&fixed[j]!==undefined))free.push(j);
+  if(fixed)for(let j=0;j<np;j++)if(fixed[j]!==null&&fixed[j]!==undefined)p[j]=fixed[j];
+  const w=weights||new Array(n).fill(1);
+  const resid=(pp)=>{const r=new Array(n);for(let i=0;i<n;i++){const yy=fn(pp,x[i]);r[i]=(y[i]-yy)*Math.sqrt(w[i]);}return r;};
+  const ssOf=(pp)=>{let s=0;const r=resid(pp);for(const v of r){if(!isFinite(v))return Infinity;s+=v*v;}return s;};
+  let ss=ssOf(p);
+  if(!isFinite(ss))return {error:"初期値でモデルが計算できません（式や初期値を確認してください）。"};
+  let lambda=1e-3,iter=0,converged=false;
+  const m=free.length;
+  for(iter=0;iter<maxIter;iter++){
+    // 数値ヤコビアン
+    const J=Array.from({length:n},()=>new Array(m).fill(0));
+    const r0=resid(p);
+    for(let jj=0;jj<m;jj++){
+      const j=free[jj];
+      const h=Math.max(1e-7,Math.abs(p[j])*1e-6);
+      const pp=[...p];pp[j]+=h;
+      const r1=resid(pp);
+      for(let i=0;i<n;i++)J[i][jj]=(r0[i]-r1[i])/h;
+    }
+    const A=Array.from({length:m},()=>new Array(m).fill(0));
+    const g=new Array(m).fill(0);
+    for(let i=0;i<n;i++)for(let a=0;a<m;a++){
+      g[a]+=J[i][a]*r0[i];
+      for(let b=a;b<m;b++)A[a][b]+=J[i][a]*J[i][b];
+    }
+    for(let a=0;a<m;a++)for(let b=0;b<a;b++)A[a][b]=A[b][a];
+    let ok=false;
+    for(let attempt=0;attempt<30;attempt++){
+      const Ad=A.map((row,a)=>row.map((v,b)=>a===b?v*(1+lambda)+1e-12:v));
+      const d=solveSym(Ad,g);
+      if(!d){lambda*=10;continue;}
+      const pn=[...p];
+      for(let a=0;a<m;a++)pn[free[a]]+=d[a];
+      const ssn=ssOf(pn);
+      if(isFinite(ssn)&&ssn<ss){
+        const rel=(ss-ssn)/Math.max(1e-300,ss);
+        p=pn;ss=ssn;lambda=Math.max(1e-12,lambda/10);ok=true;
+        if(rel<tol)converged=true;
+        break;
+      }
+      lambda*=10;
+      if(lambda>1e12){ok=false;break;}
+    }
+    if(!ok||converged)break;
+  }
+  // 共分散行列
+  const J=Array.from({length:n},()=>new Array(m).fill(0));
+  const r0=resid(p);
+  for(let jj=0;jj<m;jj++){
+    const j=free[jj];
+    const h=Math.max(1e-7,Math.abs(p[j])*1e-6);
+    const pp=[...p];pp[j]+=h;
+    const r1=resid(pp);
+    for(let i=0;i<n;i++)J[i][jj]=(r0[i]-r1[i])/h;
+  }
+  const A=Array.from({length:m},()=>new Array(m).fill(0));
+  for(let i=0;i<n;i++)for(let a=0;a<m;a++)for(let b=0;b<m;b++)A[a][b]+=J[i][a]*J[i][b];
+  const df=n-m;
+  const s2=df>0?ss/df:NaN;
+  const cov=matInv(A);
+  const se=new Array(np).fill(NaN),ciLo=new Array(np).fill(NaN),ciHi=new Array(np).fill(NaN);
+  const tc=df>0?tQuantile(1-(1-ci)/2,df):NaN;
+  if(cov)for(let a=0;a<m;a++){
+    const j=free[a];
+    se[j]=Math.sqrt(Math.abs(s2*cov[a][a]));
+    ciLo[j]=p[j]-tc*se[j];ciHi[j]=p[j]+tc*se[j];
+  }
+  const my=mean(y);
+  let sst=0;for(const v of y)sst+=(v-my)*(v-my);
+  const r2=1-ss/sst;
+  const K=m+1;
+  const aicc=n*Math.log(ss/n)+2*K+(n-K-1>0?2*K*(K+1)/(n-K-1):0);
+  const resids=y.map((v,i)=>v-fn(p,x[i]));
+  // Runs test
+  const xn=x.map(v=>(v&&typeof v==="object")?v.v:v);
+  const ord=xn.map((v,i)=>i).sort((a,b)=>xn[a]-xn[b]);
+  const signs=ord.map(i=>resids[i]>=0?1:-1);
+  let runs=1;for(let i=1;i<signs.length;i++)if(signs[i]!==signs[i-1])runs++;
+  const npos=signs.filter(v=>v>0).length,nneg=signs.length-npos;
+  let runsP=NaN;
+  if(npos>0&&nneg>0){
+    const mu=2*npos*nneg/(npos+nneg)+1;
+    const va=2*npos*nneg*(2*npos*nneg-npos-nneg)/(Math.pow(npos+nneg,2)*(npos+nneg-1));
+    runsP=va>0?ncdf((runs-mu)/Math.sqrt(va)):NaN;
+  }
+  return {p,se,ciLo,ciHi,ss,df,n,r2,sy:Math.sqrt(s2),cov,iter,converged,aicc,resid:resids,
+    runs,runsP,corrMatrix:cov?cov.map((row,a)=>row.map((v,b)=>v/Math.sqrt(Math.abs(cov[a][a]*cov[b][b])))):null,
+    freeIdx:free};
+}
+function extraSSF(fit1,fit2){ // fit1:単純モデル fit2:複雑モデル
+  const F=((fit1.ss-fit2.ss)/(fit1.df-fit2.df))/(fit2.ss/fit2.df);
+  const p=fPvalue(F,fit1.df-fit2.df,fit2.df);
+  const dAIC=fit1.aicc-fit2.aicc;
+  return {F,dfN:fit1.df-fit2.df,dfD:fit2.df,p,dAIC,
+    probComplex:1/(1+Math.exp(-0.5*dAIC)),better:p<0.05?"複雑モデル":"単純モデル"};
+}
+/* ---- 曲線モデルライブラリ ---- */
+const NLMODELS=[
+ {id:"line",cat:"直線・多項式",name:"直線 Y=切片+傾き*X",eq:"Y = Intercept + Slope*X",params:["Slope","Intercept"],
+  f:(p,x)=>p[1]+p[0]*x,init:(x,y)=>{const f=linFit(x,y);return [f.slope||1,f.intercept||0];}},
+ {id:"poly2",cat:"直線・多項式",name:"2次多項式",eq:"Y = B0 + B1*X + B2*X²",params:["B0","B1","B2"],
+  f:(p,x)=>p[0]+p[1]*x+p[2]*x*x,init:(x,y)=>[mean(y),0,0]},
+ {id:"poly3",cat:"直線・多項式",name:"3次多項式",eq:"Y = B0 + B1*X + B2*X² + B3*X³",params:["B0","B1","B2","B3"],
+  f:(p,x)=>p[0]+p[1]*x+p[2]*x*x+p[3]*x*x*x,init:(x,y)=>[mean(y),0,0,0]},
+ {id:"poly4",cat:"直線・多項式",name:"4次多項式",eq:"Y = B0+B1X+B2X²+B3X³+B4X⁴",params:["B0","B1","B2","B3","B4"],
+  f:(p,x)=>p[0]+p[1]*x+p[2]*x*x+p[3]*Math.pow(x,3)+p[4]*Math.pow(x,4),init:(x,y)=>[mean(y),0,0,0,0]},
+ {id:"ec50var",cat:"用量反応（刺激）",name:"log(作動薬) vs 反応 — 傾き可変(4PL)",
+  eq:"Y = Bottom + (Top-Bottom)/(1+10^((LogEC50-X)*HillSlope))",params:["Bottom","Top","LogEC50","HillSlope"],
+  f:(p,x)=>p[0]+(p[1]-p[0])/(1+Math.pow(10,(p[2]-x)*p[3])),
+  init:(x,y)=>{const lo=Math.min(...y),hi=Math.max(...y);return [lo,hi,median(x),1];},
+  derived:(p)=>[["EC50",Math.pow(10,p[2])]]},
+ {id:"ec50std",cat:"用量反応（刺激）",name:"log(作動薬) vs 反応 — 標準勾配",
+  eq:"Y = Bottom + (Top-Bottom)/(1+10^(LogEC50-X))",params:["Bottom","Top","LogEC50"],
+  f:(p,x)=>p[0]+(p[1]-p[0])/(1+Math.pow(10,p[2]-x)),
+  init:(x,y)=>[Math.min(...y),Math.max(...y),median(x)],derived:(p)=>[["EC50",Math.pow(10,p[2])]]},
+ {id:"ec50_5pl",cat:"用量反応（刺激）",name:"非対称シグモイド(5PL)",
+  eq:"Y = Bottom+(Top-Bottom)/(1+10^((LogEC50-X)*Hill))^S",params:["Bottom","Top","LogEC50","HillSlope","S"],
+  f:(p,x)=>p[0]+(p[1]-p[0])/Math.pow(1+Math.pow(10,(p[2]-x)*p[3]),p[4]),
+  init:(x,y)=>[Math.min(...y),Math.max(...y),median(x),1,1]},
+ {id:"ic50var",cat:"用量反応（阻害）",name:"log(阻害薬) vs 反応 — 傾き可変",
+  eq:"Y = Bottom + (Top-Bottom)/(1+10^((X-LogIC50)*HillSlope))",params:["Bottom","Top","LogIC50","HillSlope"],
+  f:(p,x)=>p[0]+(p[1]-p[0])/(1+Math.pow(10,(x-p[2])*p[3])),
+  init:(x,y)=>[Math.min(...y),Math.max(...y),median(x),1],derived:(p)=>[["IC50",Math.pow(10,p[2])]]},
+ {id:"ic50std",cat:"用量反応（阻害）",name:"log(阻害薬) vs 反応 — 標準勾配",
+  eq:"Y = Bottom + (Top-Bottom)/(1+10^(X-LogIC50))",params:["Bottom","Top","LogIC50"],
+  f:(p,x)=>p[0]+(p[1]-p[0])/(1+Math.pow(10,x-p[2])),
+  init:(x,y)=>[Math.min(...y),Math.max(...y),median(x)],derived:(p)=>[["IC50",Math.pow(10,p[2])]]},
+ {id:"sig4pl",cat:"用量反応（阻害）",name:"4PL（Xは対数化しない）",
+  eq:"Y = Bottom + (Top-Bottom)/(1+(EC50/X)^Hill)",params:["Bottom","Top","EC50","HillSlope"],
+  f:(p,x)=>p[0]+(p[1]-p[0])/(1+Math.pow(p[2]/x,p[3])),
+  init:(x,y)=>[Math.min(...y),Math.max(...y),median(x.filter(v=>v>0)),1]},
+ {id:"expdecay1",cat:"指数",name:"一相性減衰",eq:"Y = (Y0-Plateau)*exp(-K*X) + Plateau",params:["Y0","Plateau","K"],
+  f:(p,x)=>(p[0]-p[1])*Math.exp(-p[2]*x)+p[1],
+  init:(x,y)=>{const mn=Math.min(...y),mx=Math.max(...y);const sp=Math.max(...x)-Math.min(...x);return [y[0]!==undefined?y[0]:mx,mn,sp>0?2/sp:1];},
+  derived:(p)=>[["半減期 t½",Math.log(2)/p[2]],["時定数 τ",1/p[2]]]},
+ {id:"expdecay2",cat:"指数",name:"二相性減衰",eq:"Y = SpanFast*exp(-Kfast*X)+SpanSlow*exp(-Kslow*X)+Plateau",
+  params:["SpanFast","Kfast","SpanSlow","Kslow","Plateau"],
+  f:(p,x)=>p[0]*Math.exp(-p[1]*x)+p[2]*Math.exp(-p[3]*x)+p[4],
+  init:(x,y)=>{const mn=Math.min(...y),mx=Math.max(...y),sp=Math.max(...x)-Math.min(...x)||1;
+    return [(mx-mn)*0.6,5/sp,(mx-mn)*0.4,0.5/sp,mn];},
+  derived:(p)=>[["t½ fast",Math.log(2)/p[1]],["t½ slow",Math.log(2)/p[3]]]},
+ {id:"expgrow",cat:"指数",name:"指数増殖",eq:"Y = Y0*exp(K*X)",params:["Y0","K"],
+  f:(p,x)=>p[0]*Math.exp(p[1]*x),
+  init:(x,y)=>{const pos=y.filter(v=>v>0);const sp=Math.max(...x)-Math.min(...x)||1;return [pos.length?Math.min(...pos):1,Math.log(Math.max(...y)/Math.max(1e-9,Math.min(...y)))/sp];},
+  derived:(p)=>[["倍加時間",Math.log(2)/p[1]]]},
+ {id:"expassoc",cat:"指数",name:"一相性結合（会合）",eq:"Y = Y0 + (Plateau-Y0)*(1-exp(-K*X))",params:["Y0","Plateau","K"],
+  f:(p,x)=>p[0]+(p[1]-p[0])*(1-Math.exp(-p[2]*x)),
+  init:(x,y)=>{const sp=Math.max(...x)-Math.min(...x)||1;return [Math.min(...y),Math.max(...y),2/sp];},
+  derived:(p)=>[["半減期 t½",Math.log(2)/p[2]]]},
+ {id:"plateauexp",cat:"指数",name:"直線→プラトー（指数）",eq:"Y = YM-(YM-Y0)*exp(-K*X)",params:["Y0","YM","K"],
+  f:(p,x)=>p[1]-(p[1]-p[0])*Math.exp(-p[2]*x),
+  init:(x,y)=>{const sp=Math.max(...x)-Math.min(...x)||1;return [y[0]||0,Math.max(...y),2/sp];}},
+ {id:"mm",cat:"酵素反応",name:"Michaelis-Menten",eq:"Y = Vmax*X/(Km+X)",params:["Vmax","Km"],
+  f:(p,x)=>p[0]*x/(p[1]+x),init:(x,y)=>[Math.max(...y)*1.1,median(x)]},
+ {id:"mm_si",cat:"酵素反応",name:"基質阻害",eq:"Y = Vmax*X/(Km+X*(1+X/Ki))",params:["Vmax","Km","Ki"],
+  f:(p,x)=>p[0]*x/(p[1]+x*(1+x/p[2])),init:(x,y)=>[Math.max(...y)*1.2,median(x),Math.max(...x)*2]},
+ {id:"allosteric",cat:"酵素反応",name:"アロステリック（Hill式）",eq:"Y = Vmax*X^h/(Khalf^h+X^h)",params:["Vmax","Khalf","h"],
+  f:(p,x)=>p[0]*Math.pow(x,p[2])/(Math.pow(p[1],p[2])+Math.pow(x,p[2])),
+  init:(x,y)=>[Math.max(...y)*1.1,median(x),1]},
+ {id:"bindsat",cat:"結合",name:"特異的結合（飽和）",eq:"Y = Bmax*X/(Kd+X)",params:["Bmax","Kd"],
+  f:(p,x)=>p[0]*x/(p[1]+x),init:(x,y)=>[Math.max(...y)*1.1,median(x)]},
+ {id:"bindns",cat:"結合",name:"全結合＝特異的＋非特異的",eq:"Y = Bmax*X/(Kd+X) + NS*X + Background",
+  params:["Bmax","Kd","NS","Background"],
+  f:(p,x)=>p[0]*x/(p[1]+x)+p[2]*x+p[3],init:(x,y)=>[Math.max(...y)*0.8,median(x),0.01,0]},
+ {id:"bind2",cat:"結合",name:"2部位結合",eq:"Y = Bmax1*X/(Kd1+X) + Bmax2*X/(Kd2+X)",
+  params:["Bmax1","Kd1","Bmax2","Kd2"],
+  f:(p,x)=>p[0]*x/(p[1]+x)+p[2]*x/(p[3]+x),
+  init:(x,y)=>[Math.max(...y)*0.6,median(x)/5,Math.max(...y)*0.4,median(x)*5]},
+ {id:"gauss",cat:"分布・その他",name:"ガウス分布",eq:"Y = Amplitude*exp(-0.5*((X-Mean)/SD)²)",
+  params:["Amplitude","Mean","SD"],
+  f:(p,x)=>p[0]*Math.exp(-0.5*Math.pow((x-p[1])/p[2],2)),
+  init:(x,y)=>{const i=y.indexOf(Math.max(...y));return [Math.max(...y),x[i],(Math.max(...x)-Math.min(...x))/4||1];}},
+ {id:"lognorm",cat:"分布・その他",name:"対数正規",eq:"Y = A*exp(-0.5*(ln(X/GeoMean)/ln(GeoSD))²)",
+  params:["Amplitude","GeoMean","GeoSD"],
+  f:(p,x)=>p[0]*Math.exp(-0.5*Math.pow(Math.log(x/p[1])/Math.log(p[2]),2)),
+  init:(x,y)=>{const i=y.indexOf(Math.max(...y));return [Math.max(...y),Math.max(1e-6,x[i]),2];}},
+ {id:"boltz",cat:"分布・その他",name:"Boltzmannシグモイド",eq:"Y = Bottom+(Top-Bottom)/(1+exp((V50-X)/Slope))",
+  params:["Bottom","Top","V50","Slope"],
+  f:(p,x)=>p[0]+(p[1]-p[0])/(1+Math.exp((p[2]-x)/p[3])),
+  init:(x,y)=>[Math.min(...y),Math.max(...y),median(x),(Math.max(...x)-Math.min(...x))/10||1]},
+ {id:"power",cat:"分布・その他",name:"べき乗",eq:"Y = A*X^B",params:["A","B"],
+  f:(p,x)=>p[0]*Math.pow(x,p[1]),init:(x,y)=>[Math.max(1e-6,Math.abs(mean(y))),1]},
+ {id:"hyperbola",cat:"分布・その他",name:"双曲線",eq:"Y = Bmax*X/(Kd+X)",params:["Bmax","Kd"],
+  f:(p,x)=>p[0]*x/(p[1]+x),init:(x,y)=>[Math.max(...y)*1.1,median(x)]},
+ {id:"sine",cat:"分布・その他",name:"正弦波",eq:"Y = Baseline+Amplitude*sin(2π(X-PhaseShift)/Wavelength)",
+  params:["Baseline","Amplitude","Wavelength","PhaseShift"],
+  f:(p,x)=>p[0]+p[1]*Math.sin(2*Math.PI*(x-p[3])/p[2]),
+  init:(x,y)=>[mean(y),(Math.max(...y)-Math.min(...y))/2,(Math.max(...x)-Math.min(...x))||1,0]},
+ {id:"logisticgrow",cat:"分布・その他",name:"ロジスティック成長",eq:"Y = K/(1+((K-Y0)/Y0)*exp(-r*X))",
+  params:["Y0","K","r"],
+  f:(p,x)=>p[1]/(1+((p[1]-p[0])/p[0])*Math.exp(-p[2]*x)),
+  init:(x,y)=>{const sp=Math.max(...x)-Math.min(...x)||1;return [Math.max(1e-6,Math.min(...y)),Math.max(...y)*1.05,4/sp];}},
+ {id:"custom",cat:"カスタム",name:"自分で式を入力",eq:"Y = ...",params:[],custom:true,f:null,init:null}
+];
+/* ---- 曲線からの内挿 ---- */
+function interpX(fn,p,ylevel,xlo,xhi){ // 単調区間でYからXを逆算
+  const N=400;let prev=fn(p,xlo),prevX=xlo;
+  const hits=[];
+  for(let i=1;i<=N;i++){
+    const xv=xlo+(xhi-xlo)*i/N,cur=fn(p,xv);
+    if((prev-ylevel)*(cur-ylevel)<=0&&prev!==cur){
+      let a=prevX,b=xv;
+      for(let k=0;k<80;k++){
+        const m=(a+b)/2;
+        if((fn(p,a)-ylevel)*(fn(p,m)-ylevel)<=0)b=m;else a=m;
+      }
+      hits.push((a+b)/2);
+    }
+    prev=cur;prevX=xv;
+  }
+  return hits;
+}
+/* ---- 曲線下面積 ---- */
+function areaUnderCurve(x,y,baseline=0){
+  const idx=x.map((v,i)=>i).sort((a,b)=>x[a]-x[b]);
+  const X=idx.map(i=>x[i]),Y=idx.map(i=>y[i]-baseline);
+  let total=0,pos=0,neg=0;
+  const peaks=[];
+  let cur=null;
+  for(let i=0;i<X.length-1;i++){
+    const a=Y[i],b=Y[i+1],dx=X[i+1]-X[i];
+    const area=(a+b)/2*dx;
+    total+=area;
+    if(area>0)pos+=area;else neg+=area;
+    if(a>0||b>0){
+      if(!cur)cur={start:X[i],area:0,peakY:-Infinity,peakX:X[i]};
+      cur.area+=area;
+      if(a>cur.peakY){cur.peakY=a;cur.peakX=X[i];}
+      if(b>cur.peakY){cur.peakY=b;cur.peakX=X[i+1];}
+    }else if(cur){cur.end=X[i];peaks.push(cur);cur=null;}
+  }
+  if(cur){cur.end=X[X.length-1];peaks.push(cur);}
+  return {total,positive:pos,negative:neg,peaks,baseline};
+}
+/* ---- 平滑化・スプライン ---- */
+function smoothMovingAvg(x,y,win=5){
+  const idx=x.map((v,i)=>i).sort((a,b)=>x[a]-x[b]);
+  const X=idx.map(i=>x[i]),Y=idx.map(i=>y[i]);
+  const h=Math.floor(win/2),out=[];
+  for(let i=0;i<X.length;i++){
+    let s=0,c=0;
+    for(let j=Math.max(0,i-h);j<=Math.min(X.length-1,i+h);j++){s+=Y[j];c++;}
+    out.push([X[i],s/c]);
+  }
+  return out;
+}
+function cubicSpline(x,y,nOut=200){
+  const idx=x.map((v,i)=>i).sort((a,b)=>x[a]-x[b]);
+  const X=idx.map(i=>x[i]),Y=idx.map(i=>y[i]);
+  const n=X.length;
+  if(n<3)return X.map((v,i)=>[v,Y[i]]);
+  const h=[],al=[];
+  for(let i=0;i<n-1;i++)h.push(X[i+1]-X[i]);
+  for(let i=1;i<n-1;i++)al.push(3*((Y[i+1]-Y[i])/h[i]-(Y[i]-Y[i-1])/h[i-1]));
+  const l=[1],mu=[0],z=[0];
+  for(let i=1;i<n-1;i++){
+    l.push(2*(X[i+1]-X[i-1])-h[i-1]*mu[i-1]);
+    mu.push(h[i]/l[i]);
+    z.push((al[i-1]-h[i-1]*z[i-1])/l[i]);
+  }
+  l.push(1);z.push(0);
+  const c=new Array(n).fill(0),b=new Array(n).fill(0),d=new Array(n).fill(0);
+  for(let j=n-2;j>=0;j--){
+    c[j]=z[j]-mu[j]*c[j+1];
+    b[j]=(Y[j+1]-Y[j])/h[j]-h[j]*(c[j+1]+2*c[j])/3;
+    d[j]=(c[j+1]-c[j])/(3*h[j]);
+  }
+  const out=[];
+  for(let k=0;k<=nOut;k++){
+    const xv=X[0]+(X[n-1]-X[0])*k/nOut;
+    let i=0;while(i<n-2&&xv>X[i+1])i++;
+    const dx=xv-X[i];
+    out.push([xv,Y[i]+b[i]*dx+c[i]*dx*dx+d[i]*dx*dx*dx]);
+  }
+  return out;
+}
+/* ---- 主成分分析（多変数表） ---- */
+function pcaAnalyze(M,names){ // M: n×p（行=観測）
+  const n=M.length,p=M[0].length;
+  const mu=[],sg=[];
+  for(let j=0;j<p;j++){const col=M.map(r=>r[j]);mu.push(mean(col));sg.push(sd(col)||1);}
+  const Z=M.map(r=>r.map((v,j)=>(v-mu[j])/sg[j]));
+  const C=Array.from({length:p},()=>new Array(p).fill(0));
+  for(let a=0;a<p;a++)for(let b=0;b<p;b++){
+    let s=0;for(let i=0;i<n;i++)s+=Z[i][a]*Z[i][b];
+    C[a][b]=s/(n-1);
+  }
+  // Jacobi法で固有値分解
+  let A=C.map(r=>[...r]);
+  let V=Array.from({length:p},(_,i)=>Array.from({length:p},(_,j)=>i===j?1:0));
+  for(let sweep=0;sweep<100;sweep++){
+    let off=0;
+    for(let a=0;a<p;a++)for(let b=a+1;b<p;b++)off+=A[a][b]*A[a][b];
+    if(off<1e-14)break;
+    for(let a=0;a<p;a++)for(let b=a+1;b<p;b++){
+      if(Math.abs(A[a][b])<1e-15)continue;
+      const th=(A[b][b]-A[a][a])/(2*A[a][b]);
+      const t=Math.sign(th||1)/(Math.abs(th)+Math.sqrt(th*th+1));
+      const c=1/Math.sqrt(t*t+1),s=t*c;
+      for(let k=0;k<p;k++){
+        const ak=A[k][a],bk=A[k][b];
+        A[k][a]=c*ak-s*bk;A[k][b]=s*ak+c*bk;
+      }
+      for(let k=0;k<p;k++){
+        const ak=A[a][k],bk=A[b][k];
+        A[a][k]=c*ak-s*bk;A[b][k]=s*ak+c*bk;
+      }
+      for(let k=0;k<p;k++){
+        const vk=V[k][a],wk=V[k][b];
+        V[k][a]=c*vk-s*wk;V[k][b]=s*vk+c*wk;
+      }
+    }
+  }
+  const eig=[];
+  for(let j=0;j<p;j++)eig.push({val:A[j][j],vec:V.map(r=>r[j])});
+  eig.sort((a,b)=>b.val-a.val);
+  const tot=sum(eig.map(e=>Math.max(0,e.val)));
+  const scores=Z.map(r=>eig.map(e=>sum(r.map((v,j)=>v*e.vec[j]))));
+  return {eig,tot,scores,names,mu,sg,
+    explained:eig.map(e=>Math.max(0,e.val)/tot*100)};
+}
