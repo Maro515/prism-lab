@@ -30,6 +30,7 @@ function typeThumb(k){
     col_hist:'<rect x="6" y="30" width="8" height="12" fill="#F0A22E"/><rect x="15" y="20" width="8" height="22" fill="#F0A22E"/><rect x="24" y="12" width="8" height="30" fill="#F0A22E"/><rect x="33" y="22" width="8" height="20" fill="#F0A22E"/><rect x="42" y="34" width="8" height="8" fill="#F0A22E"/>',
     xy_scatter:'<circle cx="10" cy="36" r="2.6" fill="#F0A22E"/><circle cx="18" cy="30" r="2.6" fill="#F0A22E"/><circle cx="26" cy="24" r="2.6" fill="#F0A22E"/><circle cx="34" cy="16" r="2.6" fill="#F0A22E"/><circle cx="44" cy="10" r="2.6" fill="#F0A22E"/><path d="M8 38L46 8" stroke="#DE5C33" stroke-width="1.8" fill="none"/>',
     xy_line:'<path d="M8 38C18 36 22 14 46 10" stroke="#F0A22E" stroke-width="2" fill="none"/><circle cx="8" cy="38" r="2.6" fill="#F0A22E"/><circle cx="24" cy="24" r="2.6" fill="#F0A22E"/><circle cx="46" cy="10" r="2.6" fill="#F0A22E"/>',
+    volcano:'<circle cx="14" cy="34" r="3" fill="#3F6FD1"/><circle cx="18" cy="24" r="3" fill="#3F6FD1"/><circle cx="26" cy="36" r="2.5" fill="#B6BFCC"/><circle cx="30" cy="30" r="2.5" fill="#B6BFCC"/><circle cx="24" cy="40" r="2.5" fill="#B6BFCC"/><circle cx="38" cy="22" r="3" fill="#DE5C33"/><circle cx="44" cy="12" r="3" fill="#DE5C33"/><path d="M6 28h44" stroke="#1d2430" stroke-width="1" stroke-dasharray="3 2"/>',
     xy_bubble:'<circle cx="16" cy="34" r="5" fill="#3F6FD1" opacity=".8"/><circle cx="30" cy="22" r="8" fill="#2E9B57" opacity=".8"/><circle cx="44" cy="14" r="4" fill="#F0A22E" opacity=".8"/><circle cx="24" cy="12" r="3" fill="#DE5C33" opacity=".8"/>',
     xy_area:'<path d="M8 40L8 30C20 26 26 14 46 12L46 40Z" fill="#F0A22E" opacity=".4" stroke="#F0A22E" stroke-width="1.6"/>',
     grp_bar:'<rect x="8" y="20" width="7" height="22" fill="#F0A22E"/><rect x="16" y="26" width="7" height="16" fill="#DE5C33"/><rect x="30" y="12" width="7" height="30" fill="#F0A22E"/><rect x="38" y="22" width="7" height="20" fill="#DE5C33"/>',
@@ -153,6 +154,24 @@ function renderInspector(g){
   if(g.gtype==="col_violin")h+=optNum(o,"violinWidth","バイオリンの幅",0.2,1.2,0.05)
     +optChk(o,"violinQuartiles","中央値・四分位を破線で描く");
   if(g.gtype==="grp_stack")h+=optChk(o,"stackPct","100%積み上げにする");
+  if(g.gtype==="volcano"&&src){
+    const dsOpts=src.groups.map((gr,i)=>[i,gr.name]);
+    h+=optSel(o,"volcA","比較する群1",dsOpts)+optSel(o,"volcB","比較する群2",dsOpts)
+     +optSel(o,"volcX","横軸",[["log2fc","log2(倍率)"],["diff","平均の差"]])
+     +optSel(o,"volcP","縦軸に使うP値",[["raw","補正前のP値"],["adj","多重比較で補正したP値"]])
+     +optSel(o,"volcAdjust","多重性の補正",[["fdr","FDR（Benjamini-Hochberg）"],["holm","Holm"],["bonferroni","Bonferroni"],["none","補正しない"]])
+     +'<div class="grid2">'+optNum(o,"volcAlpha","有意水準",0.0001,0.5,0.005,80)
+     +optNum(o,"volcFC","変化量の閾値",0,20,0.1,80)+"</div>"
+     +optSel(o,"volcLabels","項目名の表示",[["sig","有意な点につける"],["top","P値の小さい上位につける"],["none","つけない"]])
+     +optNum(o,"volcTopN","表示する数",1,80,1)
+     +optChk(o,"volcCounts","増加・減少の件数を表示")
+     +optChk(o,"volcWelch","Welch補正を使う")
+     +'<div class="frow"><label>色（増加／減少／なし）</label>'
+     +'<input type="color" data-opt="volcUp" value="'+(o.volcUp||"#DE5C33")+'">'
+     +'<input type="color" data-opt="volcDown" value="'+(o.volcDown||"#3F6FD1")+'">'
+     +'<input type="color" data-opt="volcNS" value="'+(o.volcNS||"#B6BFCC")+'"></div>'
+     +'<p class="mini">「行ごとの複数t検定」を実行しておくと、その補正方法のP値がそのまま使われます。</p>';
+  }
   if(g.gtype==="grp_bar")h+=optSel(o,"barLayout","棒の並べ方",[["interleaved","集合（行ごとにまとめる）"],["separated","分離（データセットごとに並べる）"]]);
   if(g.gtype==="grp_heat"||g.gtype==="mv_corrheat")h+=optSel(o,"heatColors","配色",
     [["viridis","Viridis（Prism標準）"],["bwr","青-白-赤"],["blues","ブルー"],["warm","暖色"],["gray","グレースケール"]])

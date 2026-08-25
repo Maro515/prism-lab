@@ -27,6 +27,9 @@ function gopt(g){
     valueLabels:"none",barLayout:"interleaved",
     yTitleRotate:true,pieLabels:"pct",donut:0.55,atRisk:false,censorTicks:true,kmPct:true,
     violinWidth:0.85,violinQuartiles:true,boxWhisker:"tukey",stackPct:false,
+    volcA:0,volcB:1,volcX:"log2fc",volcP:"raw",volcAlpha:0.05,volcFC:1,volcAdjust:"fdr",
+    volcLabels:"sig",volcTopN:10,volcCounts:true,volcWelch:true,
+    volcUp:"#DE5C33",volcDown:"#3F6FD1",volcNS:"#B6BFCC",
     heatColors:"viridis",logBase:10,capRadius:0,dpi:3};
   return Object.assign(d,g.opts||{});
 }
@@ -1106,6 +1109,121 @@ GRAPHTYPES.grp_heat={name:"ヒートマップ",cat:"グループ",for:["grouped"
     if(o.ylab)body+=tspanText(bx,by-8,esc(o.ylab),{fs:fs*0.95,bold,fill:ink});
     if(o.title)body+=tspanText(W/2,o.fsTitle+8,esc(o.title),{anchor:"middle",fs:o.fsTitle,bold,fill:ink});
     return '<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" font-family="'+o.font+'" style="background:#fff">'+body+"</svg>";
+  }};
+/* ---------- ボルケーノプロット ---------- */
+function volcanoData(sh,o){
+  // 行ごとに2群を比較し、効果量（log2倍率 or 差）と P値 を返す
+  const a=+(o.volcA||0),b=+(o.volcB!==undefined&&o.volcB!==""?o.volcB:1);
+  const nR=usedRows(sh);
+  const rows=[];
+  for(let r=0;r<nR;r++){
+    const A=[],B=[];
+    for(let s2=0;s2<sh.sub;s2++){
+      const va=cellNum(sh,r,a,s2),vb=cellNum(sh,r,b,s2);
+      if(!isNaN(va))A.push(va);
+      if(!isNaN(vb))B.push(vb);
+    }
+    if(A.length<2||B.length<2)continue;
+    const t=tTest2(A,B,{welch:o.volcWelch!==false});
+    rows.push({row:r,label:sh.rows[r].t||("行"+(r+1)),m1:mean(A),m2:mean(B),diff:t.diff,p:t.p,n1:A.length,n2:B.length});
+  }
+  if(!rows.length)return null;
+  // 多重性の補正
+  const ps=rows.map(x=>x.p);
+  let adj;
+  if(o.volcAdjust==="holm")adj=holm(ps);
+  else if(o.volcAdjust==="bonferroni")adj=bonferroni(ps);
+  else if(o.volcAdjust==="none")adj=ps.slice();
+  else adj=bhFDR(ps);
+  rows.forEach((x,i)=>x.pAdj=adj[i]);
+  // 解析シートがあれば、そのP値（補正方法）を優先して使う
+  const an=analysisData(sh.id,"rowtt");
+  if(an&&an.volcano&&an.a===a&&an.b===b){
+    const map={};
+    an.volcano.forEach(v=>map[v.row]=v);
+    rows.forEach(x=>{if(map[x.row]){x.p=map[x.row].p;x.pAdj=map[x.row].pAdj;}});
+  }
+  const canRatio=rows.every(x=>x.m1>0&&x.m2>0);
+  const useLog=(o.volcX!=="diff")&&canRatio;
+  rows.forEach(x=>{x.fx=useLog?Math.log2(x.m1/x.m2):x.diff;});
+  const pv=(x)=>o.volcP==="adj"?x.pAdj:x.p;
+  const minP=Math.min(...rows.map(x=>pv(x)).filter(v=>v>0),1e-300);
+  rows.forEach(x=>{const q=pv(x);x.fy=-Math.log10(q>0?q:minP/10);});
+  const alpha=+(o.volcAlpha||0.05),thr=+(o.volcFC===""||o.volcFC===undefined?(useLog?1:0):o.volcFC);
+  rows.forEach(x=>{
+    const sig=pv(x)<alpha&&Math.abs(x.fx)>=thr;
+    x.dir=sig?(x.fx>0?"up":"down"):"ns";
+  });
+  return {rows,useLog,alpha,thr,a,b,
+    up:rows.filter(x=>x.dir==="up").length,down:rows.filter(x=>x.dir==="down").length};
+}
+GRAPHTYPES.volcano={name:"ボルケーノプロット",cat:"グループ",for:["grouped","nested"],
+  desc:"行ごとに2群を比較し、変化量（log2倍率）とP値で散布図にします。発現解析・プロテオミクスに。",
+  draw:(g,sh)=>{
+    const o=gopt(g),ink=inkOf(o),bold=o.bold!==false;
+    if(sh.groups.length<2)return emptySVG("2つのデータセット（群）が必要です");
+    const V=volcanoData(sh,o);
+    if(!V)return emptySVG("各行に2個以上の値がある行がありません");
+    const upC=o.volcUp||"#DE5C33",dnC=o.volcDown||"#3F6FD1",nsC=o.volcNS||"#B6BFCC";
+    const xr=Math.max(...V.rows.map(x=>Math.abs(x.fx)))*1.1||1;
+    const xs=autoRange([-xr,xr],o,"x");
+    const ys=autoRange([0,Math.max(...V.rows.map(x=>x.fy))*1.12||1],o,"y");
+    if(o.ymin==="")ys.min=0;
+    ys.title=o.ylab||("−log10("+(o.volcP==="adj"?"補正後P":"P")+")");
+    ys.legend=o.legend?[{name:(o.volcUpName||"増加")+"（n="+V.up+"）",color:upC},
+      {name:(o.volcDownName||"減少")+"（n="+V.down+"）",color:dnC},
+      {name:"有意差なし",color:nsC}]:[];
+    const xTitle=o.xlab||(V.useLog?("log2( "+esc(sh.groups[V.a].name)+" / "+esc(sh.groups[V.b].name)+" )")
+      :("平均の差（"+esc(sh.groups[V.a].name)+" − "+esc(sh.groups[V.b].name)+"）"));
+    const P=startPlot(o,{type:"num",min:xs.min,max:xs.max,log:false,ticks:xs.ticks,title:xTitle},ys);
+    let body="";
+    // しきい値の破線
+    const yThr=-Math.log10(V.alpha);
+    if(yThr>=ys.min&&yThr<=ys.max)
+      body+='<line x1="'+P.px0+'" y1="'+P.Y(yThr)+'" x2="'+P.px1+'" y2="'+P.Y(yThr)+'" stroke="'+ink+'" stroke-width="1.4" stroke-dasharray="7 5"/>';
+    if(V.thr>0){
+      [-V.thr,V.thr].forEach(v=>{
+        if(v>=xs.min&&v<=xs.max)
+          body+='<line x1="'+P.X(v)+'" y1="'+P.py0+'" x2="'+P.X(v)+'" y2="'+P.py1+'" stroke="'+ink+'" stroke-width="1.4" stroke-dasharray="7 5"/>';
+      });
+    }
+    const colOf=(d)=>d==="up"?upC:d==="down"?dnC:nsC;
+    const r=o.pointSize/2.2;
+    V.rows.filter(x=>x.dir==="ns").forEach(x=>{
+      body+='<circle cx="'+P.X(x.fx)+'" cy="'+P.Y(x.fy)+'" r="'+r+'" fill="'+nsC+'" fill-opacity="0.85" stroke="'+(o.pointStroke?ink:nsC)+'" stroke-width="0.9"/>';
+    });
+    V.rows.filter(x=>x.dir!=="ns").forEach(x=>{
+      body+='<circle cx="'+P.X(x.fx)+'" cy="'+P.Y(x.fy)+'" r="'+(r*1.12)+'" fill="'+colOf(x.dir)+'" stroke="'+(o.pointStroke?ink:colOf(x.dir))+'" stroke-width="1.1"/>';
+    });
+    // ラベル（重なりを避けて配置）
+    if(o.volcLabels&&o.volcLabels!=="none"){
+      const topN=+(o.volcTopN||10);
+      let cand=V.rows.filter(x=>x.dir!=="ns");
+      if(o.volcLabels==="top")cand=V.rows.slice().sort((p1,p2)=>p2.fy-p1.fy);
+      cand=cand.sort((p1,p2)=>p2.fy-p1.fy).slice(0,topN);
+      const placed=[];
+      const fsL=o.fsAxis*0.92;
+      cand.forEach(x=>{
+        const w=txtW(x.label,fsL,bold)+6,h=fsL+3;
+        let px=P.X(x.fx)+r*1.5,py=P.Y(x.fy)-r*1.2,anchor="start";
+        if(px+w>P.px1){px=P.X(x.fx)-r*1.5;anchor="end";}
+        const box=[anchor==="end"?px-w:px,py-h,w,h];
+        const hit=placed.some(b=>!(box[0]+box[2]<b[0]||b[0]+b[2]<box[0]||box[1]+box[3]<b[1]||b[1]+b[3]<box[1]));
+        if(hit){
+          py-=h+2;box[1]=py-h;
+          if(placed.some(b=>!(box[0]+box[2]<b[0]||b[0]+b[2]<box[0]||box[1]+box[3]<b[1]||b[1]+b[3]<box[1])))return;
+        }
+        placed.push(box);
+        body+=tspanText(px,py,esc(x.label),{anchor,fs:fsL,bold,fill:ink});
+      });
+    }
+    // 件数の注記
+    let over="";
+    if(o.volcCounts!==false){
+      over+=tspanText(P.px1-6,P.py0+P.fs+2,"↑ "+V.up,{anchor:"end",fs:o.fs,bold,fill:upC});
+      over+=tspanText(P.px0+6,P.py0+P.fs+2,"↓ "+V.down,{anchor:"start",fs:o.fs,bold,fill:dnC});
+    }
+    return wrapSVG(o,P,body,over);
   }};
 /* ---------- 生存曲線 ---------- */
 GRAPHTYPES.surv_km={name:"生存曲線（Kaplan-Meier）",cat:"生存",for:["survival"],

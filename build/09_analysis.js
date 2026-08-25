@@ -692,12 +692,15 @@ ANALYSES.rowtt={
     else adj=ps;
     raw.forEach((x,i)=>x.pAdj=adj[i]);
     const nSig=raw.filter(x=>x.pAdj<0.05).length;
+    const volc=raw.map(x=>({row:x.r,label:x.label,mean1:mean(x.A),mean2:mean(x.B),
+      diff:x.t.diff,p:x.t.p,pAdj:x.pAdj,n1:x.A.length,n2:x.B.length}));
     return {html:T(["行","平均1","平均2","差","95% CI","t","df","P値","補正後P","判定"],
       raw.map(x=>[esc(x.label),fmt(mean(x.A)),fmt(mean(x.B)),fmt(x.t.diff),ciTxt(x.t.ciLo,x.t.ciHi),
         fmt(Math.abs(x.t.t),3),fmt(x.t.df,1),pCell(x.t.p),pCell(x.pAdj),
         '<span class="'+(x.pAdj<0.05?"sigstar":"pill ns")+'">'+star(x.pAdj)+"</span>"]))
       +verdict(nSig+" / "+raw.length+" 行で有意差が検出されました（補正後 P&lt;0.05）。"),
-      data:{comparisons:raw.map(x=>({row:x.r,i:p.a,j:p.b,p:x.pAdj,star:star(x.pAdj)}))}};
+      data:{comparisons:raw.map(x=>({row:x.r,i:p.a,j:p.b,p:x.pAdj,star:star(x.pAdj)})),
+        volcano:volc,a:p.a,b:p.b,method:p.method}};
   }
 };
 /* ---------- 直線回帰 ---------- */

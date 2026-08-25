@@ -652,6 +652,35 @@ const DEMOS={
       sh.rows.push(row);
     }
   }},
+ volcano:{name:"発現データ60遺伝子（ボルケーノ用）",tt:"grouped",desc:"対照 vs 処理の2群×3反復を60遺伝子分。行ごとのt検定→ボルケーノプロット。",
+  make:(sh)=>{
+    const rnd=mulberry32(9021);
+    sh.name="遺伝子発現（60遺伝子）";sh.yTitle="正規化発現量";
+    sh.groups=[{name:"処理",color:GCOLORS[1],symbol:"circle"},{name:"対照",color:GCOLORS[0],symbol:"circle"}];
+    sh.sub=4;sh.rows=[];
+    const names=["TP53","EGFR","MYC","BRCA1","KRAS","PTEN","AKT1","CDKN2A","RB1","MDM2",
+      "VEGFA","HIF1A","CCND1","BCL2","BAX","CASP3","MKI67","ESR1","ERBB2","PGR",
+      "CD8A","PDCD1","CD274","FOXP3","IFNG","IL6","TNF","TGFB1","CXCL9","CCL2",
+      "COL1A1","FN1","MMP9","TIMP1","SNAI1","CDH1","CDH2","VIM","ZEB1","TWIST1",
+      "GAPDH","ACTB","TUBB","RPL13A","B2M","HPRT1","PPIA","SDHA","YWHAZ","UBC",
+      "SOD1","CAT","GPX1","NFE2L2","KEAP1","HMOX1","NQO1","GCLC","TXN","PRDX1"];
+    names.forEach((nm,i)=>{
+      const base=Math.exp(rnorm(rnd,Math.log(120),0.7));
+      let lfc=0;
+      if(i<8)lfc=rnorm(rnd,1.8,0.5);        // 明確に増加
+      else if(i>=30&&i<38)lfc=rnorm(rnd,-1.7,0.5); // 明確に減少
+      else if(i<20)lfc=rnorm(rnd,0.35,0.35);
+      else lfc=rnorm(rnd,0,0.22);
+      const cv=0.09+rnd()*0.06;
+      const row=newRow(2,4);
+      row.t=nm;
+      for(let s2=0;s2<4;s2++){
+        row.v[0][s2]=(base*Math.pow(2,lfc)*Math.exp(rnorm(rnd,0,cv))).toFixed(1);
+        row.v[1][s2]=(base*Math.exp(rnorm(rnd,0,cv))).toFixed(1);
+      }
+      sh.rows.push(row);
+    });
+  }},
  nested:{name:"入れ子データ（群→個体→反復）",tt:"nested",desc:"3群×4個体×3技術的反復。入れ子ANOVAで擬似反復を避ける。",
   make:(sh)=>{
     const rnd=mulberry32(2468);
