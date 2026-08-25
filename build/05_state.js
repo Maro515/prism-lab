@@ -14,6 +14,7 @@ const TTYPES={
   multivar:{name:"多変数",icon:"▦",desc:"1行1症例・1列1変数。重回帰・相関行列・PCAに。"},
   nested:{name:"入れ子",icon:"⧉",desc:"群の中に被験者、その中に技術的反復。"}
 };
+const APP_VERSION="2026.08.25";
 let PROJ=null,SEL=null,UNDO=[],REDO=[];
 function uid(){return Math.random().toString(36).slice(2,9);}
 function toast(msg,err){

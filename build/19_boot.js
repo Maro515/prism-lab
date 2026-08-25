@@ -30,6 +30,7 @@ function welcomeDialog(){
   }});
 }
 (function boot(){
+  document.getElementById("appver").textContent="v"+APP_VERSION;
   const p=loadLocal();
   if(p){
     PROJ=p;

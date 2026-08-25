@@ -231,6 +231,7 @@ function helpDialog(){
    +'<p><b>ショートカット</b>：<kbd>Ctrl</kbd>+<kbd>Z</kbd> 元に戻す ／ <kbd>Ctrl</kbd>+<kbd>S</kbd> プロジェクト保存 ／ 表内は矢印キー・<kbd>Tab</kbd>・<kbd>Enter</kbd>で移動。</p>'
    +'<p><b>困ったとき</b>：反復測定で<b>欠測がある</b>→「混合効果モデル（REML）」、曲線に<b>外れ値が混じる</b>→非線形回帰の「ROUT法」、'
    +'2つの曲線で<b>TopとBottomを揃えたい</b>→非線形回帰の「パラメータの共有」を使ってください。</p>'
+   +'<p class="mini">画面左上に表示されている版（v'+APP_VERSION+'）が最新かどうかは、公開ページを <kbd>Shift</kbd>+再読み込み（Windowsは <kbd>Ctrl</kbd>+<kbd>F5</kbd>）すると確認できます。</p>'
    +'<p class="mini">データはブラウザ内（localStorage）に自動保存されます。別PCへ移すときは「保存」で .prism.json を書き出してください。</p></div>',
    [{label:"閉じる",primary:true}],{width:680});
 }

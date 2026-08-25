@@ -1111,18 +1111,30 @@ GRAPHTYPES.grp_heat={name:"ヒートマップ",cat:"グループ",for:["grouped"
     return '<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" font-family="'+o.font+'" style="background:#fff">'+body+"</svg>";
   }};
 /* ---------- ボルケーノプロット ---------- */
+function volcGroups(sh,o){
+  const n=sh.groups.length;
+  const norm=(v,def)=>{
+    let arr=Array.isArray(v)?v.slice():(v===undefined||v===""?null:[+v]);
+    if(!arr||!arr.length)arr=def;
+    return arr.filter(i=>i>=0&&i<n);
+  };
+  const g1=norm(o.volcG1!==undefined?o.volcG1:o.volcA,[0]);
+  const g2=norm(o.volcG2!==undefined?o.volcG2:o.volcB,[Math.min(1,n-1)]);
+  return [g1.length?g1:[0],g2.length?g2:[Math.min(1,n-1)]];
+}
 function volcanoData(sh,o){
   // 行ごとに2群を比較し、効果量（log2倍率 or 差）と P値 を返す
-  const a=+(o.volcA||0),b=+(o.volcB!==undefined&&o.volcB!==""?o.volcB:1);
+  const [G1,G2]=volcGroups(sh,o);
+  const a=G1[0],b=G2[0];
   const nR=usedRows(sh);
   const rows=[];
+  const grab=(r,cols)=>{
+    const out=[];
+    cols.forEach(c=>{for(let s2=0;s2<sh.sub;s2++){const v=cellNum(sh,r,c,s2);if(!isNaN(v))out.push(v);}});
+    return out;
+  };
   for(let r=0;r<nR;r++){
-    const A=[],B=[];
-    for(let s2=0;s2<sh.sub;s2++){
-      const va=cellNum(sh,r,a,s2),vb=cellNum(sh,r,b,s2);
-      if(!isNaN(va))A.push(va);
-      if(!isNaN(vb))B.push(vb);
-    }
+    const A=grab(r,G1),B=grab(r,G2);
     if(A.length<2||B.length<2)continue;
     const t=tTest2(A,B,{welch:o.volcWelch!==false});
     rows.push({row:r,label:sh.rows[r].t||("行"+(r+1)),m1:mean(A),m2:mean(B),diff:t.diff,p:t.p,n1:A.length,n2:B.length});
@@ -1138,7 +1150,7 @@ function volcanoData(sh,o){
   rows.forEach((x,i)=>x.pAdj=adj[i]);
   // 解析シートがあれば、そのP値（補正方法）を優先して使う
   const an=analysisData(sh.id,"rowtt");
-  if(an&&an.volcano&&an.a===a&&an.b===b){
+  if(an&&an.volcano&&an.a===a&&an.b===b&&G1.length===1&&G2.length===1){
     const map={};
     an.volcano.forEach(v=>map[v.row]=v);
     rows.forEach(x=>{if(map[x.row]){x.p=map[x.row].p;x.pAdj=map[x.row].pAdj;}});
@@ -1154,16 +1166,17 @@ function volcanoData(sh,o){
     const sig=pv(x)<alpha&&Math.abs(x.fx)>=thr;
     x.dir=sig?(x.fx>0?"up":"down"):"ns";
   });
-  return {rows,useLog,alpha,thr,a,b,
+  return {rows,useLog,alpha,thr,a,b,G1,G2,
+    name1:G1.map(i=>sh.groups[i].name).join("+"),name2:G2.map(i=>sh.groups[i].name).join("+"),
     up:rows.filter(x=>x.dir==="up").length,down:rows.filter(x=>x.dir==="down").length};
 }
-GRAPHTYPES.volcano={name:"ボルケーノプロット",cat:"グループ",for:["grouped","nested"],
-  desc:"行ごとに2群を比較し、変化量（log2倍率）とP値で散布図にします。発現解析・プロテオミクスに。",
+GRAPHTYPES.volcano={name:"ボルケーノプロット",cat:"グループ",for:["grouped","nested","column","multivar","xy"],
+  desc:"行ごとに2群を比較し、変化量（log2倍率）とP値で散布図にします。発現解析・プロテオミクスに。1行＝1遺伝子、列＝サンプル。",
   draw:(g,sh)=>{
     const o=gopt(g),ink=inkOf(o),bold=o.bold!==false;
-    if(sh.groups.length<2)return emptySVG("2つのデータセット（群）が必要です");
+    if(sh.groups.length<2)return emptySVG("2つ以上の列（データセット）が必要です");
     const V=volcanoData(sh,o);
-    if(!V)return emptySVG("各行に2個以上の値がある行がありません");
+    if(!V)return emptySVG("各群に2つ以上の値がある行がありません（各群に2列以上、または反復のサブ列が必要です）");
     const upC=o.volcUp||"#DE5C33",dnC=o.volcDown||"#3F6FD1",nsC=o.volcNS||"#B6BFCC";
     const xr=Math.max(...V.rows.map(x=>Math.abs(x.fx)))*1.1||1;
     const xs=autoRange([-xr,xr],o,"x");
@@ -1173,8 +1186,8 @@ GRAPHTYPES.volcano={name:"ボルケーノプロット",cat:"グループ",for:["
     ys.legend=o.legend?[{name:(o.volcUpName||"増加")+"（n="+V.up+"）",color:upC},
       {name:(o.volcDownName||"減少")+"（n="+V.down+"）",color:dnC},
       {name:"有意差なし",color:nsC}]:[];
-    const xTitle=o.xlab||(V.useLog?("log2( "+esc(sh.groups[V.a].name)+" / "+esc(sh.groups[V.b].name)+" )")
-      :("平均の差（"+esc(sh.groups[V.a].name)+" − "+esc(sh.groups[V.b].name)+"）"));
+    const xTitle=o.xlab||(V.useLog?("log2( "+esc(V.name1)+" / "+esc(V.name2)+" )")
+      :("平均の差（"+esc(V.name1)+" − "+esc(V.name2)+"）"));
     const P=startPlot(o,{type:"num",min:xs.min,max:xs.max,log:false,ticks:xs.ticks,title:xTitle},ys);
     let body="";
     // しきい値の破線

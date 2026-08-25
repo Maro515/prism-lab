@@ -190,7 +190,7 @@ kbd{background:#eef1f5;border:1px solid var(--line);border-bottom-width:2px;bord
 <div id="app">
   <header id="topbar">
     <div class="brandrow">
-      <div class="brand"><span class="logo"></span>PrismLab <small>論文グラフ＆統計スタジオ</small></div>
+      <div class="brand"><span class="logo"></span>PrismLab <small>論文グラフ＆統計スタジオ</small><small id="appver" style="color:#9aa3b1"></small></div>
       <input id="projName" value="無題のプロジェクト" title="プロジェクト名">
       <span class="spacer"></span>
       <span class="hint" id="savestate"></span>
@@ -2061,6 +2061,7 @@ const TTYPES={
   multivar:{name:"多変数",icon:"▦",desc:"1行1症例・1列1変数。重回帰・相関行列・PCAに。"},
   nested:{name:"入れ子",icon:"⧉",desc:"群の中に被験者、その中に技術的反復。"}
 };
+const APP_VERSION="2026.08.25";
 let PROJ=null,SEL=null,UNDO=[],REDO=[];
 function uid(){return Math.random().toString(36).slice(2,9);}
 function toast(msg,err){
@@ -2489,6 +2490,7 @@ function helpDialog(){
    +'<p><b>ショートカット</b>：<kbd>Ctrl</kbd>+<kbd>Z</kbd> 元に戻す ／ <kbd>Ctrl</kbd>+<kbd>S</kbd> プロジェクト保存 ／ 表内は矢印キー・<kbd>Tab</kbd>・<kbd>Enter</kbd>で移動。</p>'
    +'<p><b>困ったとき</b>：反復測定で<b>欠測がある</b>→「混合効果モデル（REML）」、曲線に<b>外れ値が混じる</b>→非線形回帰の「ROUT法」、'
    +'2つの曲線で<b>TopとBottomを揃えたい</b>→非線形回帰の「パラメータの共有」を使ってください。</p>'
+   +'<p class="mini">画面左上に表示されている版（v'+APP_VERSION+'）が最新かどうかは、公開ページを <kbd>Shift</kbd>+再読み込み（Windowsは <kbd>Ctrl</kbd>+<kbd>F5</kbd>）すると確認できます。</p>'
    +'<p class="mini">データはブラウザ内（localStorage）に自動保存されます。別PCへ移すときは「保存」で .prism.json を書き出してください。</p></div>',
    [{label:"閉じる",primary:true}],{width:680});
 }
@@ -6038,18 +6040,30 @@ GRAPHTYPES.grp_heat={name:"ヒートマップ",cat:"グループ",for:["grouped"
     return '<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" font-family="'+o.font+'" style="background:#fff">'+body+"</svg>";
   }};
 /* ---------- ボルケーノプロット ---------- */
+function volcGroups(sh,o){
+  const n=sh.groups.length;
+  const norm=(v,def)=>{
+    let arr=Array.isArray(v)?v.slice():(v===undefined||v===""?null:[+v]);
+    if(!arr||!arr.length)arr=def;
+    return arr.filter(i=>i>=0&&i<n);
+  };
+  const g1=norm(o.volcG1!==undefined?o.volcG1:o.volcA,[0]);
+  const g2=norm(o.volcG2!==undefined?o.volcG2:o.volcB,[Math.min(1,n-1)]);
+  return [g1.length?g1:[0],g2.length?g2:[Math.min(1,n-1)]];
+}
 function volcanoData(sh,o){
   // 行ごとに2群を比較し、効果量（log2倍率 or 差）と P値 を返す
-  const a=+(o.volcA||0),b=+(o.volcB!==undefined&&o.volcB!==""?o.volcB:1);
+  const [G1,G2]=volcGroups(sh,o);
+  const a=G1[0],b=G2[0];
   const nR=usedRows(sh);
   const rows=[];
+  const grab=(r,cols)=>{
+    const out=[];
+    cols.forEach(c=>{for(let s2=0;s2<sh.sub;s2++){const v=cellNum(sh,r,c,s2);if(!isNaN(v))out.push(v);}});
+    return out;
+  };
   for(let r=0;r<nR;r++){
-    const A=[],B=[];
-    for(let s2=0;s2<sh.sub;s2++){
-      const va=cellNum(sh,r,a,s2),vb=cellNum(sh,r,b,s2);
-      if(!isNaN(va))A.push(va);
-      if(!isNaN(vb))B.push(vb);
-    }
+    const A=grab(r,G1),B=grab(r,G2);
     if(A.length<2||B.length<2)continue;
     const t=tTest2(A,B,{welch:o.volcWelch!==false});
     rows.push({row:r,label:sh.rows[r].t||("行"+(r+1)),m1:mean(A),m2:mean(B),diff:t.diff,p:t.p,n1:A.length,n2:B.length});
@@ -6065,7 +6079,7 @@ function volcanoData(sh,o){
   rows.forEach((x,i)=>x.pAdj=adj[i]);
   // 解析シートがあれば、そのP値（補正方法）を優先して使う
   const an=analysisData(sh.id,"rowtt");
-  if(an&&an.volcano&&an.a===a&&an.b===b){
+  if(an&&an.volcano&&an.a===a&&an.b===b&&G1.length===1&&G2.length===1){
     const map={};
     an.volcano.forEach(v=>map[v.row]=v);
     rows.forEach(x=>{if(map[x.row]){x.p=map[x.row].p;x.pAdj=map[x.row].pAdj;}});
@@ -6081,16 +6095,17 @@ function volcanoData(sh,o){
     const sig=pv(x)<alpha&&Math.abs(x.fx)>=thr;
     x.dir=sig?(x.fx>0?"up":"down"):"ns";
   });
-  return {rows,useLog,alpha,thr,a,b,
+  return {rows,useLog,alpha,thr,a,b,G1,G2,
+    name1:G1.map(i=>sh.groups[i].name).join("+"),name2:G2.map(i=>sh.groups[i].name).join("+"),
     up:rows.filter(x=>x.dir==="up").length,down:rows.filter(x=>x.dir==="down").length};
 }
-GRAPHTYPES.volcano={name:"ボルケーノプロット",cat:"グループ",for:["grouped","nested"],
-  desc:"行ごとに2群を比較し、変化量（log2倍率）とP値で散布図にします。発現解析・プロテオミクスに。",
+GRAPHTYPES.volcano={name:"ボルケーノプロット",cat:"グループ",for:["grouped","nested","column","multivar","xy"],
+  desc:"行ごとに2群を比較し、変化量（log2倍率）とP値で散布図にします。発現解析・プロテオミクスに。1行＝1遺伝子、列＝サンプル。",
   draw:(g,sh)=>{
     const o=gopt(g),ink=inkOf(o),bold=o.bold!==false;
-    if(sh.groups.length<2)return emptySVG("2つのデータセット（群）が必要です");
+    if(sh.groups.length<2)return emptySVG("2つ以上の列（データセット）が必要です");
     const V=volcanoData(sh,o);
-    if(!V)return emptySVG("各行に2個以上の値がある行がありません");
+    if(!V)return emptySVG("各群に2つ以上の値がある行がありません（各群に2列以上、または反復のサブ列が必要です）");
     const upC=o.volcUp||"#DE5C33",dnC=o.volcDown||"#3F6FD1",nsC=o.volcNS||"#B6BFCC";
     const xr=Math.max(...V.rows.map(x=>Math.abs(x.fx)))*1.1||1;
     const xs=autoRange([-xr,xr],o,"x");
@@ -6100,8 +6115,8 @@ GRAPHTYPES.volcano={name:"ボルケーノプロット",cat:"グループ",for:["
     ys.legend=o.legend?[{name:(o.volcUpName||"増加")+"（n="+V.up+"）",color:upC},
       {name:(o.volcDownName||"減少")+"（n="+V.down+"）",color:dnC},
       {name:"有意差なし",color:nsC}]:[];
-    const xTitle=o.xlab||(V.useLog?("log2( "+esc(sh.groups[V.a].name)+" / "+esc(sh.groups[V.b].name)+" )")
-      :("平均の差（"+esc(sh.groups[V.a].name)+" − "+esc(sh.groups[V.b].name)+"）"));
+    const xTitle=o.xlab||(V.useLog?("log2( "+esc(V.name1)+" / "+esc(V.name2)+" )")
+      :("平均の差（"+esc(V.name1)+" − "+esc(V.name2)+"）"));
     const P=startPlot(o,{type:"num",min:xs.min,max:xs.max,log:false,ticks:xs.ticks,title:xTitle},ys);
     let body="";
     // しきい値の破線
@@ -6526,6 +6541,11 @@ function optSel(o,key,label,opts){
 function optChk(o,key,label){
   return '<label class="chk" style="display:block;margin:5px 0"><input type="checkbox" data-opt="'+key+'"'+(o[key]?" checked":"")+"> "+label+"</label>";
 }
+function optArr(o,key,label,items,sel){
+  return '<div class="frow" style="align-items:flex-start"><label style="min-width:88px">'+label+'</label><div>'
+   +items.map(it=>'<label class="chk" style="margin-right:10px"><input type="checkbox" data-optarr="'+key+'" value="'+it[0]+'"'
+     +((sel||[]).indexOf(+it[0])>=0?" checked":"")+"> "+esc(it[1])+"</label>").join("")+"</div></div>";
+}
 function optText(o,key,label,ph){
   return insRow(label,'<input type="text" data-opt="'+key+'" value="'+esc(o[key]||"")+'" placeholder="'+(ph||"")+'" style="width:190px">');
 }
@@ -6589,7 +6609,9 @@ function renderInspector(g){
   if(g.gtype==="grp_stack")h+=optChk(o,"stackPct","100%積み上げにする");
   if(g.gtype==="volcano"&&src){
     const dsOpts=src.groups.map((gr,i)=>[i,gr.name]);
-    h+=optSel(o,"volcA","比較する群1",dsOpts)+optSel(o,"volcB","比較する群2",dsOpts)
+    const gg=volcGroups(src,o);
+    h+='<p class="mini">1行＝1項目（遺伝子など）、列＝サンプルとして扱います。各群に属する列をチェックしてください（各群2列以上、またはサブ列の反復が必要）。</p>'
+     +optArr(o,"volcG1","群1（分子）",dsOpts,gg[0])+optArr(o,"volcG2","群2（分母）",dsOpts,gg[1])
      +optSel(o,"volcX","横軸",[["log2fc","log2(倍率)"],["diff","平均の差"]])
      +optSel(o,"volcP","縦軸に使うP値",[["raw","補正前のP値"],["adj","多重比較で補正したP値"]])
      +optSel(o,"volcAdjust","多重性の補正",[["fdr","FDR（Benjamini-Hochberg）"],["holm","Holm"],["bonferroni","Bonferroni"],["none","補正しない"]])
@@ -6673,6 +6695,13 @@ document.addEventListener("change",(e)=>{
     sh.opts[t.dataset.opt]=v;
     redrawGraph();
     if(["w","h","legend","legendPos"].includes(t.dataset.opt))return;
+  }
+  if(t.dataset.optarr!==undefined){
+    sh.opts=sh.opts||{};
+    const key=t.dataset.optarr;
+    sh.opts[key]=Array.from(document.querySelectorAll('#inspector [data-optarr="'+key+'"]'))
+      .filter(c=>c.checked).map(c=>+c.value);
+    redrawGraph();
   }
   const src=getSheet(sh.srcId);
   if(t.dataset.gcol!==undefined&&src){src.groups[+t.dataset.gcol].color=t.value;redrawGraph();}
@@ -7459,6 +7488,7 @@ function welcomeDialog(){
   }});
 }
 (function boot(){
+  document.getElementById("appver").textContent="v"+APP_VERSION;
   const p=loadLocal();
   if(p){
     PROJ=p;

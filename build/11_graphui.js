@@ -93,6 +93,11 @@ function optSel(o,key,label,opts){
 function optChk(o,key,label){
   return '<label class="chk" style="display:block;margin:5px 0"><input type="checkbox" data-opt="'+key+'"'+(o[key]?" checked":"")+"> "+label+"</label>";
 }
+function optArr(o,key,label,items,sel){
+  return '<div class="frow" style="align-items:flex-start"><label style="min-width:88px">'+label+'</label><div>'
+   +items.map(it=>'<label class="chk" style="margin-right:10px"><input type="checkbox" data-optarr="'+key+'" value="'+it[0]+'"'
+     +((sel||[]).indexOf(+it[0])>=0?" checked":"")+"> "+esc(it[1])+"</label>").join("")+"</div></div>";
+}
 function optText(o,key,label,ph){
   return insRow(label,'<input type="text" data-opt="'+key+'" value="'+esc(o[key]||"")+'" placeholder="'+(ph||"")+'" style="width:190px">');
 }
@@ -156,7 +161,9 @@ function renderInspector(g){
   if(g.gtype==="grp_stack")h+=optChk(o,"stackPct","100%積み上げにする");
   if(g.gtype==="volcano"&&src){
     const dsOpts=src.groups.map((gr,i)=>[i,gr.name]);
-    h+=optSel(o,"volcA","比較する群1",dsOpts)+optSel(o,"volcB","比較する群2",dsOpts)
+    const gg=volcGroups(src,o);
+    h+='<p class="mini">1行＝1項目（遺伝子など）、列＝サンプルとして扱います。各群に属する列をチェックしてください（各群2列以上、またはサブ列の反復が必要）。</p>'
+     +optArr(o,"volcG1","群1（分子）",dsOpts,gg[0])+optArr(o,"volcG2","群2（分母）",dsOpts,gg[1])
      +optSel(o,"volcX","横軸",[["log2fc","log2(倍率)"],["diff","平均の差"]])
      +optSel(o,"volcP","縦軸に使うP値",[["raw","補正前のP値"],["adj","多重比較で補正したP値"]])
      +optSel(o,"volcAdjust","多重性の補正",[["fdr","FDR（Benjamini-Hochberg）"],["holm","Holm"],["bonferroni","Bonferroni"],["none","補正しない"]])
@@ -240,6 +247,13 @@ document.addEventListener("change",(e)=>{
     sh.opts[t.dataset.opt]=v;
     redrawGraph();
     if(["w","h","legend","legendPos"].includes(t.dataset.opt))return;
+  }
+  if(t.dataset.optarr!==undefined){
+    sh.opts=sh.opts||{};
+    const key=t.dataset.optarr;
+    sh.opts[key]=Array.from(document.querySelectorAll('#inspector [data-optarr="'+key+'"]'))
+      .filter(c=>c.checked).map(c=>+c.value);
+    redrawGraph();
   }
   const src=getSheet(sh.srcId);
   if(t.dataset.gcol!==undefined&&src){src.groups[+t.dataset.gcol].color=t.value;redrawGraph();}
